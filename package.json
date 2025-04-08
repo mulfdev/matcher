@@ -26,6 +26,7 @@
         "typescript": "^5.8.2"
     },
     "dependencies": {
+        "dotenv": "^16.4.7",
         "grammy": "^1.35.1",
         "h3": "^1.15.1",
         "llamaindex": "^0.9.16"
