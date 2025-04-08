@@ -1,14 +1,13 @@
-import http from 'node:http';
+import { createApp, toNodeListener, setResponseStatus } from 'h3';
+import { createServer } from 'http';
 
-const hostname = '0.0.0.0';
-const port = 3000;
+const app = createApp();
 
-const server = http.createServer((req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello, TypeScript HTTP Server!\n');
+app.use('/healthcheck', (evt) => {
+    setResponseStatus(evt, 200);
+    return { status: 'OK' };
 });
 
-server.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`);
+createServer(toNodeListener(app)).listen(3000, '0.0.0.0', () => {
+    console.log('Server running on http://0.0.0.0:3000');
 });

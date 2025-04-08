@@ -27,6 +27,7 @@
     },
     "dependencies": {
         "grammy": "^1.35.1",
+        "h3": "^1.15.1",
         "llamaindex": "^0.9.16"
     }
 }
