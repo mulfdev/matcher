@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "build": "tsc",
-        "start": "node ./dist/main.js",
+        "start": "node ./dist/src/main.js",
         "lint": "eslint . --ext .js,.ts",
         "lint:fix": "eslint . --ext .js,.ts --fix",
         "dev": "tsx watch ./src/main.ts",
