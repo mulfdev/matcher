@@ -26,9 +26,13 @@
         "typescript": "^5.8.2"
     },
     "dependencies": {
+        "@paralleldrive/cuid2": "^2.2.2",
         "dotenv": "^16.4.7",
+        "got": "^14.4.7",
         "grammy": "^1.35.1",
         "h3": "^1.15.1",
-        "llamaindex": "^0.9.16"
+        "llamaindex": "^0.9.16",
+        "pdf2json": "^3.1.5",
+        "zod": "^3.24.2"
     }
 }
