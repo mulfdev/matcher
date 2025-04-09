@@ -1,11 +1,9 @@
-import PDFParser from 'pdf2json';
 import { Bot } from 'grammy';
 import got from 'got';
 import { pipeline } from 'stream/promises';
 import { createId } from '@paralleldrive/cuid2';
 import { createWriteStream, existsSync } from 'fs';
 import { z } from 'zod';
-import { formatStructuredText } from './core.js';
 
 const { BOT_TOKEN } = process.env;
 
@@ -25,7 +23,6 @@ const DocumentMessageSchema = z.object({
 });
 
 export const bot = new Bot(BOT_TOKEN);
-const pdfParser = new PDFParser();
 
 bot.command('start', (ctx) => ctx.reply('Welcome! Up and running.'));
 // bot.on('message', (ctx) => ctx.reply('Got another message!'));
@@ -45,7 +42,7 @@ bot.on(':document', async (ctx) => {
 
         console.log(fileUrl.result);
 
-        const filePath = `./${createId()}`;
+        const filePath = `./tmp/${createId()}.pdf`;
         await pipeline(
             got.stream(`https://api.telegram.org/file/bot${BOT_TOKEN}/${fileUrl.result.file_path}`),
 
@@ -55,15 +52,6 @@ bot.on(':document', async (ctx) => {
         if (!existsSync(filePath)) {
             return ctx.reply('could not save your file');
         }
-
-        pdfParser.on('pdfParser_dataError', (errData) => console.error(errData.parserError));
-        pdfParser.on('pdfParser_dataReady', (pdfData) => {
-            const structured = formatStructuredText(pdfData as any);
-            console.log('✅ Structured resume saved as JSON.');
-            console.log(structured);
-        });
-
-        pdfParser.loadPDF(filePath);
     } catch (e) {
         console.log(e);
     }
