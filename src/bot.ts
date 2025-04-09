@@ -80,11 +80,17 @@ bot.on(':document', async (ctx) => {
             jpgFiles.map(async (file) => {
                 const fullPath = join(subDir, file);
                 const data = await readFile(fullPath);
-                return `data:image/jpeg;base64,${data.toString('base64')}`;
+                return {
+                    type: 'image_url',
+                    image_url: `data:image/jpeg;base64,${data.toString('base64')}`,
+                };
             })
         );
 
-        console.log(base64Images);
+        for (const item of base64Images) {
+            console.log(item.type);
+            console.log(item.image_url.slice(0, 50));
+        }
 
         await rm(subDir, { recursive: true, force: true });
     } catch (e) {
