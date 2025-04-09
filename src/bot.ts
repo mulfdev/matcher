@@ -44,7 +44,7 @@ bot.on(':document', async (ctx) => {
 
     try {
         const getFileUrl = `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${document.file_id}`;
-        const fileUrl = (await got.get(getFileUrl).json()) as Record<string, any>;
+        const fileUrl = await got.get(getFileUrl).json();
 
         console.log(fileUrl.result);
 
@@ -96,5 +96,5 @@ bot.on(':document', async (ctx) => {
     } catch (e) {
         console.log(e);
     }
-    ctx.reply('got document');
+    await ctx.reply('got document');
 });
