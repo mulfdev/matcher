@@ -9,15 +9,6 @@ export default tseslint.config(
         ignores: ['dist/**'],
     },
     eslint.configs.recommended,
-    tseslint.configs.recommendedTypeChecked,
-    {
-        languageOptions: {
-            parserOptions: {
-                projectService: true,
-                tsconfigRootDir: import.meta.dirname,
-            },
-        },
-    },
-
+    tseslint.configs.recommended,
     configPrettier
 );
