@@ -8,7 +8,7 @@
         "start": "node ./dist/src/main.js",
         "lint": "eslint .",
         "lint:fix": "eslint . --ext .js,.ts --fix",
-        "generateEmbeddings": "tsx src/generateEmbeddings.ts"
+        "generateEmbeddings": "tsx src/generateEmbeddings.ts",
         "dev": "tsx watch ./src/main.ts",
         "test": "echo \"Error: no test specified\" && exit 1",
         "deploy": "npm run lint && fly deploy"
@@ -33,9 +33,13 @@
         "got": "^14.4.7",
         "grammy": "^1.35.1",
         "h3": "^1.15.1",
+        "knex": "^3.1.0",
         "llamaindex": "^0.9.16",
         "node-poppler": "^7.2.4",
         "openai": "^4.93.0",
+        "p-limit": "^6.2.0",
+        "pg": "^8.14.1",
+        "pgvector": "^0.2.0",
         "zod": "^3.24.2"
     }
 }
