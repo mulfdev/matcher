@@ -1,5 +1,6 @@
 import { Bot } from 'grammy';
 import got from 'got';
+import { ok } from 'assert';
 import { pipeline } from 'stream/promises';
 import { createId } from '@paralleldrive/cuid2';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
@@ -8,11 +9,12 @@ import { join } from 'path';
 import { z } from 'zod';
 import { Poppler } from 'node-poppler';
 
-const { BOT_TOKEN } = process.env;
+type MessageContent = { type: 'text'; text: string } | { type: 'image_url'; image_url: string };
 
-if (!BOT_TOKEN) {
-    throw new Error('Bot token must be set');
-}
+const { BOT_TOKEN, OPENROUTER_KEY } = process.env;
+
+ok(BOT_TOKEN, 'BOT_TOKEN MUST BE DEFINED');
+ok(OPENROUTER_KEY, 'OPENROUTER_KEY MUST BE DEFINED');
 
 const baseDir = join(process.cwd(), 'tmp');
 
@@ -76,7 +78,7 @@ bot.on(':document', async (ctx) => {
             (file) => file.toLowerCase().endsWith('.jpg') || file.toLowerCase().endsWith('.jpeg')
         );
 
-        const base64Images = await Promise.all(
+        const base64Images: MessageContent[] = await Promise.all(
             jpgFiles.map(async (file) => {
                 const fullPath = join(subDir, file);
                 const data = await readFile(fullPath);
@@ -87,10 +89,40 @@ bot.on(':document', async (ctx) => {
             })
         );
 
-        for (const item of base64Images) {
-            console.log(item.type);
-            console.log(item.image_url.slice(0, 50));
-        }
+        const textBlock: MessageContent[] = [
+            {
+                type: 'text',
+                text: 'classify this person based on their resume, i have included images of each page of their resume, ensure you understand the content, think step by step about the candidate, their skills and experience and tell me what you think of their skills',
+            },
+        ];
+        const contentArray = textBlock.concat(base64Images);
+
+        const body = {
+            model: 'meta-llama/llama-4-maverick',
+            messages: [
+                {
+                    role: 'user',
+                    content: contentArray,
+                },
+            ],
+            max_tokens: 800,
+            temperature: 0.2,
+            top_p: 1,
+            presence_penalty: 0.1,
+            frequency_penalty: 0.3,
+        };
+
+        const response = await got.post('https://openrouter.ai/api/v1/chat/completions', {
+            headers: {
+                Authorization: `Bearer ${OPENROUTER_KEY}`,
+                'Content-Type': 'application/json',
+                'X-OpenRouter-Provider': 'lambda',
+            },
+            json: body,
+            responseType: 'json',
+        });
+
+        console.log(JSON.stringify(response.body, null, 2));
 
         await rm(subDir, { recursive: true, force: true });
     } catch (e) {
