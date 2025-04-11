@@ -8,6 +8,7 @@
         "start": "node ./dist/src/main.js",
         "lint": "eslint .",
         "lint:fix": "eslint . --ext .js,.ts --fix",
+        "generateEmbeddings": "tsx src/generateEmbeddings.ts"
         "dev": "tsx watch ./src/main.ts",
         "test": "echo \"Error: no test specified\" && exit 1",
         "deploy": "npm run lint && fly deploy"
@@ -34,6 +35,7 @@
         "h3": "^1.15.1",
         "llamaindex": "^0.9.16",
         "node-poppler": "^7.2.4",
+        "openai": "^4.93.0",
         "zod": "^3.24.2"
     }
 }
