@@ -23,7 +23,7 @@ async function processJobs() {
     try {
         const jobs = await db<JobPostingsDetails>('job_postings_details')
             .select('*')
-            .whereNull('embedding');
+            .whereNull('embeddings');
 
         console.log(`Total entries to be updated: ${jobs.length}`);
 
@@ -69,7 +69,7 @@ async function processJobs() {
                     const formattedEmbedding = pgvector.toSql(embeddingData.embedding);
                     const updatedId = await db<JobPostingsDetails>('job_postings_details')
                         .where({ id: job.id })
-                        .update({ embedding: formattedEmbedding }, ['id']);
+                        .update({ embeddings: formattedEmbedding }, ['id']);
                     console.log({ updatedId });
                 });
 

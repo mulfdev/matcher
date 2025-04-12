@@ -30,6 +30,7 @@
     "dependencies": {
         "@llamaindex/core": "^0.6.2",
         "@llamaindex/openai": "^0.3.0",
+        "@llamaindex/postgres": "^0.0.45",
         "@paralleldrive/cuid2": "^2.2.2",
         "dotenv": "^16.4.7",
         "got": "^14.4.7",

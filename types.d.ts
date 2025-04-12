@@ -9,7 +9,7 @@ export interface JobPostingsDetails {
     summary?: string;
     job_postings_scraping_id?: string;
     last_modified: string;
-    embedding?: number[];
+    embeddings?: number[];
 }
 
 declare module 'knex/types/tables.js' {
