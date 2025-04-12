@@ -28,10 +28,12 @@ type FileResult = {
     };
 };
 
-const { BOT_TOKEN, OPENROUTER_KEY } = process.env;
+const { BOT_TOKEN, OPENROUTER_KEY, DB_HOST, DB_PORT, DB_NAME, DB_USER } = process.env;
 
 ok(BOT_TOKEN, 'BOT_TOKEN MUST BE DEFINED');
 ok(OPENROUTER_KEY, 'OPENROUTER_KEY MUST BE DEFINED');
+
+ok(DB_HOST && DB_PORT && DB_NAME && DB_USER, 'DB env vars must be set');
 
 const baseDir = join(process.cwd(), 'tmp');
 
@@ -51,10 +53,10 @@ const poppler = new Poppler();
 
 const vectorStore = new PGVectorStore({
     clientConfig: {
-        host: 'ballast.proxy.rlwy.net',
-        port: 14533,
-        database: 'jobs_rag',
-        user: 'mulf0',
+        host: DB_HOST,
+        port: DB_PORT,
+        database: DB_NAME,
+        user: DB_USER,
     },
     dimensions: 1536,
     tableName: 'job_postings_details',
