@@ -1,4 +1,5 @@
 import 'dotenv/config';
+
 import { OpenAI } from 'llamaindex';
 import { z } from 'zod';
 import { Bot } from 'grammy';
@@ -115,8 +116,14 @@ you must response in a JSON format that matches this:
 
 the 'catergory' is fixed - use the options provided, 'level' is where you think they are in their careers based on your analysis - only use traditional career ladder identifiers here: junior, mid, mid-senior, senior, staff, etc... / the summary is where your synthsis goes. YOU MUST follow this structure when responsing. DO NOT PROVIDE MARKDOWN EVER. ONLY EVER RESPONSED WITH THE FOLLOWING FORMAT IN JSON!!
 
+for skills: ONLY pull items from the provided documents. DO NOT ADD ANY SKILLS that arent listed in the provided images, EVER!
+
+for experience: break up the jobs into individual items and put them in an array of objects, follow this format for Jobs: {title: string, years: string, company: string}
+
             catergory: "engineer/developer, designer, business developmment, human resources and people operations, developer relations",
-            level: string
+            level: string,
+            skills: Jobs[],
+            experience: string[],
             summary: string, 
 `;
 
