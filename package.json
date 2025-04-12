@@ -28,13 +28,14 @@
         "typescript-eslint": "^8.29.1"
     },
     "dependencies": {
+        "@llamaindex/openai": "^0.3.0",
         "@paralleldrive/cuid2": "^2.2.2",
         "dotenv": "^16.4.7",
         "got": "^14.4.7",
         "grammy": "^1.35.1",
         "h3": "^1.15.1",
         "knex": "^3.1.0",
-        "llamaindex": "^0.9.16",
+        "llamaindex": "^0.9.17",
         "node-poppler": "^7.2.4",
         "openai": "^4.93.0",
         "p-limit": "^6.2.0",
