@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
-import { OpenAI } from 'llamaindex';
+import { PGVectorStore } from '@llamaindex/postgres';
+import { OpenAI, VectorStoreIndex } from 'llamaindex';
 import { z } from 'zod';
 import { Bot } from 'grammy';
 import got from 'got';
@@ -48,7 +49,25 @@ const DocumentMessageSchema = z.object({
 export const bot = new Bot(BOT_TOKEN);
 const poppler = new Poppler();
 
-bot.command('start', (ctx) => ctx.reply('Welcome! Up and running.'));
+const vectorStore = new PGVectorStore({
+    clientConfig: {
+        host: 'ballast.proxy.rlwy.net',
+        port: 14533,
+        database: 'jobs_rag',
+        user: 'mulf0',
+    },
+    dimensions: 1536,
+    tableName: 'job_postings_details',
+    schemaName: 'public',
+});
+
+const index = await VectorStoreIndex.fromVectorStore(vectorStore);
+
+bot.command('start', (ctx) =>
+    ctx.reply(
+        'Welcome to the Matcher. I am here to help you find your pefect job matches! Please provide your resume in PDF format to begin!'
+    )
+);
 // bot.on('message', (ctx) => ctx.reply('Got another message!'));
 bot.on(':document', async (ctx) => {
     const result = DocumentMessageSchema.safeParse(ctx.update);
@@ -94,6 +113,10 @@ bot.on(':document', async (ctx) => {
             (file) => file.toLowerCase().endsWith('.jpg') || file.toLowerCase().endsWith('.jpeg')
         );
 
+        ctx.reply(
+            "Got your info here, I'm processing it now to add you to my system 💪\nOne moment Please"
+        );
+
         const base64Images: MessageContent[] = await Promise.all(
             jpgFiles.map(async (file) => {
                 const fullPath = join(subDir, file);
@@ -136,7 +159,7 @@ for experience: break up the jobs into individual items and put them in an array
             temperature: 0.6,
             topP: 0.8,
             reasoningEffort: 'high',
-            maxTokens: 800,
+            maxTokens: 1000,
         });
 
         const response = await llm.chat({
@@ -149,10 +172,11 @@ for experience: break up the jobs into individual items and put them in an array
             ],
         });
 
+        ctx.reply('Analysis Complete ✅\nmatching you now');
+
         console.log(response.message.content);
         await rm(subDir, { recursive: true, force: true });
     } catch (e) {
         console.log(e);
     }
-    await ctx.reply('got document');
 });
