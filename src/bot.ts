@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { agent, AgentStream, tool, openai, Settings } from 'llamaindex';
+import { OpenAI } from 'llamaindex';
 import { z } from 'zod';
 import { Bot } from 'grammy';
 import got from 'got';
@@ -11,7 +11,20 @@ import { readdir, readFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { Poppler } from 'node-poppler';
 
-type MessageContent = { type: 'text'; text: string } | { type: 'image_url'; image_url: string };
+type MessageContent =
+    | { type: 'text'; text: string }
+    | {
+          type: 'image_url';
+          image_url: {
+              url: string;
+              detail: 'auto';
+          };
+      };
+type FileResult = {
+    result?: {
+        file_path?: string;
+    };
+};
 
 const { BOT_TOKEN, OPENROUTER_KEY } = process.env;
 
@@ -48,9 +61,9 @@ bot.on(':document', async (ctx) => {
 
     try {
         const getFileUrl = `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${document.file_id}`;
-        const fileUrl = await got.get(getFileUrl).json();
+        const fileUrl = (await got.get(getFileUrl).json()) as FileResult;
 
-        console.log(fileUrl.result);
+        ok(fileUrl.result);
 
         const tempDir = createId();
         const subDir = join(baseDir, tempDir);
@@ -86,73 +99,50 @@ bot.on(':document', async (ctx) => {
                 const data = await readFile(fullPath);
                 return {
                     type: 'image_url',
-                    image_url: `data:image/jpeg;base64,${data.toString('base64')}`,
+                    image_url: {
+                        url: `data:image/jpeg;base64,${data.toString('base64')}`,
+                        detail: 'auto',
+                    },
                 };
             })
         );
 
-        // const textBlock: MessageContent[] = [
-        //     {
-        //         type: 'text',
-        //         text: 'classify this person based on their resume, i have included images of each page of their resume, ensure you understand the content, think step by step about the candidate, their skills and experience and tell me what you think of their skills',
-        //     },
-        // ];
-        // const contentArray = textBlock.concat(base64Images);
+        const systemPrompt = `classify this person based on their resume, i have included images of each page of their resume, ensure you understand the content, think step by step about the candidate, their skills and experience and tell me what you think of their skills. be firm and discerning. we are looking to place this person in a job that is the BEST fit possible so we need to have an accurate understanding of their skills. parse their skills section of a resume if its there. look at their jobs one by one to get a better understanding of their experience. look for any projects listed as well to see non work related experiences as well. we don't care about specific company names. make sure to summarize your findings in a high level yet detailed manner. 
+
+list our the the rough years of experience this person has as well to understand their career level
+
+you must response in a JSON format that matches this: 
+
+the 'catergory' is fixed - use the options provided, 'level' is where you think they are in their careers based on your analysis - only use traditional career ladder identifiers here: junior, mid, mid-senior, senior, staff, etc... / the summary is where your synthsis goes. YOU MUST follow this structure when responsing. DO NOT PROVIDE MARKDOWN EVER. ONLY EVER RESPONSED WITH THE FOLLOWING FORMAT IN JSON!!
+
+            catergory: "engineer/developer, designer, business developmment, human resources and people operations, developer relations",
+            level: string
+            summary: string, 
+`;
+
         //
-        // const body = {
-        //     model: 'meta-llama/llama-4-maverick',
-        //     messages: [
-        //         {
-        //             role: 'user',
-        //             content: contentArray,
-        //         },
-        //     ],
-        //     max_tokens: 800,
-        //     temperature: 0.2,
-        //     top_p: 1,
-        //     presence_penalty: 0.1,
-        //     frequency_penalty: 0.3,
-        // };
-        //
-        // const response = await got.post('https://openrouter.ai/api/v1/chat/completions', {
-        //     headers: {
-        //         Authorization: `Bearer ${OPENROUTER_KEY}`,
-        //         'Content-Type': 'application/json',
-        //         'X-OpenRouter-Provider': 'lambda',
-        //     },
-        //     json: body,
-        //     responseType: 'json',
-        // });
-        //
-        // console.log(JSON.stringify(response.body, null, 2));
-        //
-        Settings.llm = openai({
-            apiKey: OPENROUTER_KEY,
+
+        const llm = new OpenAI({
             model: 'meta-llama/llama-4-maverick',
+            baseURL: 'https://openrouter.ai/api/v1',
+            apiKey: process.env.OPENROUTER_KEY,
+            temperature: 0.6,
+            topP: 0.8,
+            reasoningEffort: 'high',
+            maxTokens: 800,
         });
 
-        const sumNumbers = ({ a, b }: { a: number; b: number }) => {
-            return `${a + b}`;
-        };
-
-        const addTool = tool({
-            name: 'sumNumbers',
-            description: 'Use this function to sum two numbers',
-            parameters: z.object({
-                a: z.number({
-                    description: 'First number to sum',
-                }),
-                b: z.number({
-                    description: 'Second number to sum',
-                }),
-            }),
-            execute: sumNumbers,
+        const response = await llm.chat({
+            messages: [
+                { role: 'system', content: systemPrompt },
+                {
+                    role: 'user',
+                    content: base64Images,
+                },
+            ],
         });
 
-        const myAgent = agent({ tools: [addTool] });
-        const context = myAgent.run('Sum 101 and 303');
-        const result = await context;
-        console.log(result.data);
+        console.log(response.message.content);
         await rm(subDir, { recursive: true, force: true });
     } catch (e) {
         console.log(e);
