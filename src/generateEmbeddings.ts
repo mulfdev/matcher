@@ -3,23 +3,27 @@ import OpenAI from 'openai';
 import Knex from 'knex';
 import pgvector from 'pgvector/knex';
 import type { JobPostingsDetails } from '../types.js';
-import assert from 'assert';
+import assert, { ok } from 'assert';
 import pLimit from 'p-limit';
 
-const config = {
-    client: 'pg',
-    connection: {
-        host: 'ballast.proxy.rlwy.net',
-        port: 14533,
-        database: 'jobs_rag',
-        user: 'mulf0',
-    },
-};
-
-const db = Knex(config);
-const openai = new OpenAI();
-
 async function processJobs() {
+    const { DB_HOST, DB_PORT, DB_NAME, DB_USER } = process.env;
+
+    ok(DB_HOST && DB_PORT && DB_NAME && DB_USER, 'DB env vars must be set');
+
+    const config = {
+        client: 'pg',
+        connection: {
+            host: DB_HOST,
+            port: DB_PORT,
+            database: DB_NAME,
+            user: DB_USER,
+        },
+    };
+
+    const db = Knex(config);
+    const openai = new OpenAI();
+
     try {
         const jobs = await db<JobPostingsDetails>('job_postings_details')
             .select('*')
@@ -74,6 +78,7 @@ async function processJobs() {
                 });
 
                 await Promise.all(updatePromises);
+                await new Promise((res) => setTimeout(res, 500));
             })
         );
 
