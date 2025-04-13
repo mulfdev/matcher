@@ -4,6 +4,7 @@ import pgvector from 'pgvector/knex';
 import type { JobPostingsDetails } from '../types.js';
 import assert from 'assert';
 import pLimit from 'p-limit';
+import { db } from './core.js';
 
 async function processJobs() {
     const openai = new OpenAI();
