@@ -12,6 +12,9 @@ import { join } from 'path';
 import { Poppler } from 'node-poppler';
 import OpenAI from 'openai';
 import { db } from './core.js';
+import type { JobPostingsDetails } from '../types.js';
+
+type SimilarityResult = JobPostingsDetails & { similarity: number };
 
 type MessageContent =
     | { type: 'text'; text: string }
@@ -126,29 +129,41 @@ bot.on(':document', async (ctx) => {
             })
         );
 
-        const systemPrompt = `classify this person based on their resume, i have included images of each page of their resume, ensure you understand the content, think step by step about the candidate, their skills and experience and tell me what you think of their skills. be firm and discerning. we are looking to place this person in a job that is the BEST fit possible so we need to have an accurate understanding of their skills. parse their skills section of a resume if its there. look at their jobs one by one to get a better understanding of their experience. look for any projects listed as well to see non work related experiences as well. we don't care about specific company names. make sure to summarize your findings in a high level yet detailed manner. 
+        const systemPrompt = `Here is the resume content to analyze:
 
-list our the the rough years of experience this person has as well to understand their career level
 
-you must response in a JSON format that matches this: 
 
-the 'catergory' is fixed - use the options provided, 'level' is where you think they are in their careers based on your analysis - only use traditional career ladder identifiers here: junior, mid, mid-senior, senior, staff, etc... / the summary is where your synthsis goes. YOU MUST follow this structure when responsing. DO NOT PROVIDE MARKDOWN EVER. ONLY EVER RESPONSED WITH THE FOLLOWING FORMAT IN JSON!!
+You are an expert resume analyst tasked with classifying and summarizing a candidate's skills and experience for potential job placement. Your analysis will be used in a vector search system for retrieval-augmented generation, so it's crucial to provide structured, detailed, and easily retrievable information.
 
-for skills: ONLY pull items from the provided documents. DO NOT ADD ANY SKILLS that arent listed in the provided images, EVER!
+The current year is 2025 as of right now.
 
-for experience: break up the jobs into individual items and put them in an array of objects, follow this format for Jobs: {title: string, years: string, company: string}
+Please follow these steps to analyze the resume:
 
-            catergory: "engineer/developer, designer, business developmment, human resources and people operations, developer relations",
-            level: string,
-            skills: Jobs[],
-            experience: string[],
-            summary: string, 
-`;
+1. Carefully read through the entire resume content.
+2. Analyze the candidate's skills, experience, and career level.
+3. provide your analysis to break down your thought process for each section before compiling the final output.
+
+
+During your analysis, consider the following:
+
+- Skills: Only include skills explicitly mentioned in the resume. Do not add any skills that aren't listed in the provided content.
+- Experience: Break down the job history into individual items.
+- Career Level: Estimate the candidate's career level based on their years of experience and job titles.
+- Category: Classify the candidate into one of the following categories: "engineer/developer", "designer", "business development", "human resources and people operations", "developer relations".
+
+- Extract and list all relevant skills mentioned in the resume. Count and number each skill as you list it.
+- Break down each job experience, noting the title, company, and duration. Calculate and note the duration for each position.
+- Calculate the total years of experience by summing up the durations from each position.
+- Determine the most appropriate career level and category. Consider arguments for different levels and categories before making a final decision.
+- Synthesize the information to create a concise yet informative summary.
+
+
+Begin your analysis now. Dont reply with markdown, just normal text`;
 
         const comp = await openai.chat.completions.create({
             model: 'meta-llama/llama-4-maverick',
             max_tokens: 1000,
-            temperature: 0.6,
+            temperature: 0.4,
             top_p: 0.8,
             messages: [
                 { role: 'system', content: systemPrompt },
@@ -168,6 +183,8 @@ for experience: break up the jobs into individual items and put them in an array
 
         const agentRes = comp.choices[0].message.content;
 
+        console.log(agentRes);
+
         const embeddingResponse = await embeder.embeddings.create({
             model: 'text-embedding-3-small',
             input: agentRes,
@@ -180,19 +197,33 @@ for experience: break up the jobs into individual items and put them in an array
 
         const vectorString = `[${embedding.join(',')}]`;
 
-        const result = await db.raw(
-            `
-      SELECT id, text, title, location, compensation, summary,
-             embeddings <-> ?::vector(1536) AS similarity
-      FROM job_postings_details
-      ORDER BY similarity ASC
-      LIMIT 5;
-    `,
-            [vectorString]
-        );
+        const results = (await db<SimilarityResult>('job_postings_details')
+            .select(
+                'text',
+                'title',
+                'location',
+                'compensation',
+                'summary',
+                db.raw('embeddings <-> ?::vector(1536) AS similarity', [vectorString])
+            )
+            .orderBy('similarity', 'asc')
+            .limit(5)) as SimilarityResult[];
 
-        console.log(result.rows);
+        const replyItems = [];
 
+        console.log(results);
+        for (const job of results) {
+            replyItems.push(`
+**Title:** ${job.title}
+**Location:** ${job.location}
+**Compensation:** ${job.compensation}
+**Summary:** ${job.summary}
+`);
+        }
+
+        const replyMessage = `Heres what i found for you!\n\n${replyItems.join('\n\n')}`;
+
+        await ctx.reply(replyMessage, { parse_mode: 'Markdown' });
         await rm(subDir, { recursive: true, force: true });
     } catch (e) {
         console.log(e);
