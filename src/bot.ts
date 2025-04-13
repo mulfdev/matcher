@@ -1,7 +1,5 @@
 import 'dotenv/config';
 
-import { PGVectorStore } from '@llamaindex/postgres';
-import { OpenAI, VectorStoreIndex } from 'llamaindex';
 import { z } from 'zod';
 import { Bot } from 'grammy';
 import got from 'got';
@@ -12,6 +10,8 @@ import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { readdir, readFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { Poppler } from 'node-poppler';
+import OpenAI from 'openai';
+import { db } from './core.js';
 
 type MessageContent =
     | { type: 'text'; text: string }
@@ -51,19 +51,12 @@ const DocumentMessageSchema = z.object({
 export const bot = new Bot(BOT_TOKEN);
 const poppler = new Poppler();
 
-const vectorStore = new PGVectorStore({
-    clientConfig: {
-        host: DB_HOST,
-        port: DB_PORT,
-        database: DB_NAME,
-        user: DB_USER,
-    },
-    dimensions: 1536,
-    tableName: 'job_postings_details',
-    schemaName: 'public',
+const openai = new OpenAI({
+    baseURL: 'https://openrouter.ai/api/v1',
+    apiKey: OPENROUTER_KEY,
 });
 
-const index = await VectorStoreIndex.fromVectorStore(vectorStore);
+const embeder = new OpenAI();
 
 bot.command('start', (ctx) =>
     ctx.reply(
@@ -152,19 +145,11 @@ for experience: break up the jobs into individual items and put them in an array
             summary: string, 
 `;
 
-        //
-
-        const llm = new OpenAI({
+        const comp = await openai.chat.completions.create({
             model: 'meta-llama/llama-4-maverick',
-            baseURL: 'https://openrouter.ai/api/v1',
-            apiKey: process.env.OPENROUTER_KEY,
+            max_tokens: 1000,
             temperature: 0.6,
-            topP: 0.8,
-            reasoningEffort: 'high',
-            maxTokens: 1000,
-        });
-
-        const response = await llm.chat({
+            top_p: 0.8,
             messages: [
                 { role: 'system', content: systemPrompt },
                 {
@@ -175,8 +160,43 @@ for experience: break up the jobs into individual items and put them in an array
         });
 
         ctx.reply('Analysis Complete ✅\nmatching you now');
+        ok(
+            comp.choices[0] &&
+                comp.choices[0].message &&
+                typeof comp.choices[0].message.content === 'string'
+        );
 
-        console.log(response.message.content);
+        const agentRes = comp.choices[0].message.content;
+
+        const recuiterPrompt =
+            'You are the best recruiter known to man, you live to place people in the job best to them. take this info and match this person to the best job we have in our listings. you get a HUGE bonus for good matches that accept job offers';
+        const combinedQuery = `${recuiterPrompt}\n\n${agentRes}`;
+
+        const embeddingResponse = await embeder.embeddings.create({
+            model: 'text-embedding-3-small',
+            input: combinedQuery,
+            encoding_format: 'float',
+        });
+
+        ok(embeddingResponse.data[0] && embeddingResponse.data[0].embedding);
+
+        const embedding = embeddingResponse.data[0].embedding;
+
+        const vectorString = `[${embedding.join(',')}]`;
+
+        const result = await db.raw(
+            `
+      SELECT id, text, title, location, compensation, summary,
+             embeddings <-> ?::vector(1536) AS similarity
+      FROM job_postings_details
+      ORDER BY similarity ASC
+      LIMIT 5;
+    `,
+            [vectorString]
+        );
+
+        console.log(result.rows);
+
         await rm(subDir, { recursive: true, force: true });
     } catch (e) {
         console.log(e);
