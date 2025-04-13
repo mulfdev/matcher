@@ -109,7 +109,7 @@ bot.on(':document', async (ctx) => {
         );
 
         ctx.reply(
-            "Got your info here, I'm processing it now to add you to my system 💪\nOne moment Please"
+            "Got your info here, I'm processing it now to add you to my system 💪\n\nOne moment Please"
         );
 
         const base64Images: MessageContent[] = await Promise.all(
@@ -159,7 +159,7 @@ for experience: break up the jobs into individual items and put them in an array
             ],
         });
 
-        ctx.reply('Analysis Complete ✅\nmatching you now');
+        ctx.reply('Analysis Complete ✅\n\nmatching you now');
         ok(
             comp.choices[0] &&
                 comp.choices[0].message &&
@@ -168,13 +168,9 @@ for experience: break up the jobs into individual items and put them in an array
 
         const agentRes = comp.choices[0].message.content;
 
-        const recuiterPrompt =
-            'You are the best recruiter known to man, you live to place people in the job best to them. take this info and match this person to the best job we have in our listings. you get a HUGE bonus for good matches that accept job offers';
-        const combinedQuery = `${recuiterPrompt}\n\n${agentRes}`;
-
         const embeddingResponse = await embeder.embeddings.create({
             model: 'text-embedding-3-small',
-            input: combinedQuery,
+            input: agentRes,
             encoding_format: 'float',
         });
 
