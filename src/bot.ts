@@ -197,6 +197,8 @@ Begin your analysis now. Dont reply with markdown, just normal text`;
 
         const vectorString = `[${embedding.join(',')}]`;
 
+        // Min 80% to show result
+
         const results = (await db<SimilarityResult>('job_postings_details')
             .select(
                 'text',
@@ -207,7 +209,7 @@ Begin your analysis now. Dont reply with markdown, just normal text`;
                 db.raw('embeddings <-> ?::vector(1536) AS similarity', [vectorString])
             )
             .orderBy('similarity', 'asc')
-            .limit(5)) as SimilarityResult[];
+            .limit(25)) as SimilarityResult[];
 
         const replyItems = [];
 
@@ -224,6 +226,9 @@ Begin your analysis now. Dont reply with markdown, just normal text`;
         const replyMessage = `Heres what i found for you!\n\n${replyItems.join('\n\n')}`;
 
         await ctx.reply(replyMessage, { parse_mode: 'Markdown' });
+
+        // TODO: Inject match feedback into matching. start list of liked jobs and add that into
+        //the matching process. every job that got a thumbs up, add that into match
         await rm(subDir, { recursive: true, force: true });
     } catch (e) {
         console.log(e);
