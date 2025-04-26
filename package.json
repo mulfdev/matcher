@@ -28,6 +28,7 @@
         "typescript-eslint": "^8.29.1"
     },
     "dependencies": {
+        "@google/genai": "^0.10.0",
         "@paralleldrive/cuid2": "^2.2.2",
         "dotenv": "^16.4.7",
         "got": "^14.4.7",
