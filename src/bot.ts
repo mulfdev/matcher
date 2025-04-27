@@ -218,10 +218,12 @@ bot.callbackQuery(['like', 'dislike'], async (ctx: MyContext) => {
     if (!job) throw new Error('Could not like/dislike job');
 
     await db('user_job_feedback')
+        //@ts-expect-error need to narrow/check type
         .insert({ user_id: userId, job_id: job.id, liked: ctx.callbackQuery.data === 'like' })
         .onConflict(['user_id', 'job_id'])
         .merge();
     await ctx.editMessageReplyMarkup();
+    //@ts-expect-error need to narrow/check type
     await ctx.answerCallbackQuery(ctx.callbackQuery.data === 'like' ? 'Saved 👍' : 'Saved 👎');
     ctx.session.index += 1;
     await sendCurrentMatch(ctx);

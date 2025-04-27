@@ -51,7 +51,7 @@ async function fetchStructuredData(job: JobPostingsDetails) {
         },
         responseType: 'json',
     });
-
+    //@ts-expect-error need to narrow type
     return JSON.parse(body.choices[0].message.content);
 }
 
