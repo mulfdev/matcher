@@ -1,7 +1,14 @@
 import 'dotenv/config';
 
 import { z } from 'zod';
-import { Bot, Context, InlineKeyboard, type CallbackQueryContext } from 'grammy';
+import {
+    Bot,
+    Context,
+    InlineKeyboard,
+    session,
+    type CallbackQueryContext,
+    type SessionFlavor,
+} from 'grammy';
 import got from 'got';
 import { ok } from 'assert';
 import { pipeline } from 'stream/promises';
@@ -21,6 +28,13 @@ type FileResult = {
         file_path?: string;
     };
 };
+
+interface SessionData {
+    matches: SimilarityResult[];
+    index: number;
+}
+
+type MyContext = Context & SessionFlavor<SessionData>;
 
 const { BOT_TOKEN } = process.env;
 
@@ -46,7 +60,9 @@ const CallbackQuerySchema = z.object({
     from: z.object({ id: z.number() }),
 });
 
-export const bot = new Bot(BOT_TOKEN);
+export const bot = new Bot<MyContext>(BOT_TOKEN);
+bot.use(session({ initial: (): SessionData => ({ matches: [], index: 0 }) }));
+
 const poppler = new Poppler();
 
 const embeder = new OpenAI();
@@ -54,7 +70,6 @@ const embeder = new OpenAI();
 const ACTIONS = {
     MATCH: { id: 'button_1', label: 'Get Matched' },
     PROFILE: { id: 'button_2', label: 'My Profile' },
-    BUTTON_3: { id: 'button_3', label: 'Button 3' },
 } as const;
 
 function createKeyboard() {
@@ -102,6 +117,25 @@ ${experience}
 
 <b>Summary:</b>
 ${escapeHtml(user.summary)}`;
+}
+
+async function sendCurrentMatch(ctx: MyContext) {
+    const { matches, index } = ctx.session;
+    if (index >= matches.length) {
+        await ctx.reply('✅ That was all of them!');
+        return;
+    }
+    const job = matches[index];
+
+    if (!job) throw new Error('Could not get job info');
+
+    const text =
+        `Title: ${job.title}\n` +
+        `Location: ${job.location}\n` +
+        `Compensation: ${job.compensation ?? 'N/A'}\n` +
+        `Summary: ${job.summary?.split('.')[0]}`;
+    const kb = new InlineKeyboard().text('👍', 'like').text('👎', 'dislike');
+    await ctx.reply(text, { reply_markup: kb });
 }
 
 async function handleButtonPress(ctx: CallbackQueryContext<Context>, actionId: string) {
@@ -159,9 +193,6 @@ async function handleButtonPress(ctx: CallbackQueryContext<Context>, actionId: s
 
             break;
         }
-        case ACTIONS.BUTTON_3.id:
-            await ctx.answerCallbackQuery('Handled Button 3');
-            break;
         default:
             await ctx.answerCallbackQuery('Unknown action');
     }
@@ -171,13 +202,38 @@ Object.values(ACTIONS).forEach(({ id }) => {
     bot.callbackQuery(id, (ctx) => handleButtonPress(ctx, id));
 });
 
+bot.callbackQuery(['like', 'dislike'], async (ctx: MyContext) => {
+    const result = CallbackQuerySchema.safeParse(ctx.update.callback_query);
+
+    console.log(ctx.update.callback_query);
+
+    if (!result.success) {
+        return ctx.reply('Could not process your request');
+    }
+
+    const userId = result.data.from.id.toString();
+    const { matches, index } = ctx.session;
+    const job = matches[index];
+
+    if (!job) throw new Error('Could not like/dislike job');
+
+    await db('user_job_feedback')
+        .insert({ user_id: userId, job_id: job.id, liked: ctx.callbackQuery.data === 'like' })
+        .onConflict(['user_id', 'job_id'])
+        .merge();
+    await ctx.editMessageReplyMarkup();
+    await ctx.answerCallbackQuery(ctx.callbackQuery.data === 'like' ? 'Saved 👍' : 'Saved 👎');
+    ctx.session.index += 1;
+    await sendCurrentMatch(ctx);
+});
+
 bot.command('start', (ctx) => {
     return ctx.reply(
         'Welcome to the Matcher. I am here to help you find your pefect job! Please select one of the following',
         { reply_markup: createKeyboard() }
     );
 });
-// bot.on('message', (ctx) => ctx.reply('Got another message!'));
+
 bot.on(':document', async (ctx) => {
     const result = DocumentMessageSchema.safeParse(ctx.update);
 
@@ -293,31 +349,29 @@ bot.on(':document', async (ctx) => {
         const skillsVec = `[${skillsEmbedding.data[0].embedding.join(',')}]`;
         const summaryVec = `[${summaryEmbedding.data[0].embedding.join(',')}]`;
 
-        const results = await db<SimilarityResult>('job_postings_details')
+        const userId = result.data.message.from.id.toString();
+
+        const ratedJobs = db('user_job_feedback').select('job_id').where('user_id', userId);
+
+        const results = await db<SimilarityResult>('job_postings_details as j')
+            .whereNotIn('j.id', ratedJobs)
             .select(
-                'id',
-                'title',
-                'location',
-                'compensation',
-                'summary',
+                'j.id',
+                'j.title',
+                'j.location',
+                'j.compensation',
+                'j.summary',
                 db.raw(
-                    '((skill_embedding <#> ?::vector(1536)) * 0.90 + (summary_embedding <#> ?::vector(1536)) * 0.10) AS similarity',
+                    '((j.skill_embedding <#> ?::vector(1536)) * 0.90 + (j.summary_embedding <#> ?::vector(1536)) * 0.10) AS similarity',
                     [skillsVec, summaryVec]
                 )
             )
             .orderBy('similarity', 'asc')
             .limit(7);
+        ctx.session.matches = results;
+        ctx.session.index = 0;
 
-        const replyItems = results.map(
-            (job) =>
-                `Title: ${job.title}\nLocation: ${job.location}\nCompensation: ${job.compensation ?? 'N/A'}\nSummary: ${job.summary?.split('.')[0]}`
-        );
-
-        console.log(results);
-
-        const replyMessage = `Here's what I found for you!\n\n${replyItems.join('\n\n')}`;
-
-        await ctx.reply(replyMessage);
+        await sendCurrentMatch(ctx);
 
         // TODO: Inject match feedback into matching. start list of liked jobs and add that into
         //the matching process. every job that got a thumbs up, add that into match
