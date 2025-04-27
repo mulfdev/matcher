@@ -8,7 +8,7 @@ import assert from 'assert';
 
 const OPENROUTER_KEY = process.env.OPENROUTER_KEY;
 const openai = new OpenAI();
-const BATCH_SIZE = 3;
+const BATCH_SIZE = 8;
 const MAX_CONCURRENT_BATCHES = 5;
 const BATCH_DELAY_MS = 250;
 
@@ -91,7 +91,6 @@ function chunk<T>(arr: T[], size: number): T[][] {
 async function processBatch(batch: JobPostingsDetails[]) {
     const results = await Promise.all(batch.map(processJob));
 
-    // build VALUES with bindings; JSON.stringify ensures "[...]" literal
     const rowSql = results.map(() => '(?::int, ?::vector, ?::vector)').join(', ');
     const bindings = results.flatMap((r) => [
         r.id,

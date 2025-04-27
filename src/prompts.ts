@@ -47,11 +47,11 @@ Extract the following fields:
 
 - total_experience_years: Total professional experience, rounded to one decimal place.
 
-- career_level: One of ['entry', 'mid', 'senior', 'executive'], based on experience and job titles.
+- career_level: One of ['entry', 'mid', 'senior', 'staff'], based on experience and job titles.
 
 - category: One of ['engineer/developer', 'designer', 'business development', 'human resources and people operations', 'developer relations'], based on the candidate's background.
 
-- summary: A concise paragraph summarizing the candidate's profile.
+- summary: A paragraph summarizing the candidate's profile. make sure that we do not put the candidate in to too small of a box. consider their experience completely in order to be able to recommend jobs that would be a good fit for their skills. focus on skills an experience to have a wider recommendation rather than just job titles. think about what a job title does as well because just the title alone is not everything. make sure to list every title someone has had as well. mention other roles they would be a good fit for that may fall outside of a role they have had previously based on skills.
 
 Guidelines:
 
@@ -60,9 +60,9 @@ Guidelines:
 3. For each experience entry, extract detailed responsibilities and achievements, focusing on quantifiable results and specific contributions.
 4. Calculate experience metrics and classify career level logically.
 5. For the summary:
-   - Synthesize the candidate's professional background, highlighting key skills, notable achievements, and areas of expertise.
+   - Synthesize the candidate's professional background, highlighting key skills, notable achievements, and areas of expertise - see how the pieces fit together.
    - Provide insights into the candidate's career trajectory, strengths, and potential value to prospective employers.
-   - Keep the summary concise, informative, and aligned with the extracted data.
+   - Keep the summary informative, and aligned with the extracted data.
 6. Adhere strictly to the specified schema. Do not include additional fields or formatting.
 7. Output only plain text. Do not use markdown formatting, including asterisks, hashes, or backticks.
 

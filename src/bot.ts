@@ -148,7 +148,7 @@ bot.on(':document', async (ctx) => {
                 'compensation',
                 'summary',
                 db.raw(
-                    '((skill_embedding <-> ?::vector(1536)) * 0.75 + (summary_embedding <-> ?::vector(1536)) * 0.25) AS similarity',
+                    '((skill_embedding <-> ?::vector(1536)) * 0.65 + (summary_embedding <-> ?::vector(1536)) * 0.35) AS similarity',
                     [skillsVec, summaryVec]
                 )
             )
