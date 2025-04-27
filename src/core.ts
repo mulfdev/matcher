@@ -1,9 +1,9 @@
 import { ok } from 'assert';
 import Knex from 'knex';
 import got from 'got';
-import { toolMap } from './tools.js';
 import { systemPrompt } from './prompts.js';
 import { resumeSchema } from './schema.js';
+import type { User } from '../types.js';
 
 export type MessageContent =
     | { type: 'text'; text: string }
@@ -53,7 +53,7 @@ export async function llm({ base64Images }: LlmParams) {
         json: {
             model,
             messages,
-            temperature: 0.2,
+            temperature: 0.3,
             top_p: 0.9,
             frequency_penalty: 0.5,
             presence_penalty: 0,
@@ -71,45 +71,9 @@ export async function llm({ base64Images }: LlmParams) {
     const initialData = initialResponse.body as any;
 
     const assistantMessage = initialData.choices[0].message;
-    messages.push(assistantMessage);
+    const content: Omit<User, 'id'> = JSON.parse(assistantMessage.content);
 
-    // Step 2: Handle tool calls if present
-    if (assistantMessage.tool_calls) {
-        for (const toolCall of assistantMessage.tool_calls) {
-            const { id, function: func } = toolCall;
-            const args = JSON.parse(func.arguments);
-            const toolFn = toolMap[func.name as keyof typeof toolMap];
-            if (!toolFn) {
-                throw new Error(`Unknown tool: ${func.name}`);
-            }
-            const result = await toolFn(args);
-            messages.push({
-                role: 'tool',
-                tool_call_id: id,
-                name: func.name,
-                content: JSON.stringify(result),
-            });
-        }
-
-        // Step 3: Send the tool result back to the model
-        const finalResponse = await got.post('https://openrouter.ai/api/v1/chat/completions', {
-            headers: {
-                Authorization: `Bearer ${OPENROUTER_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            json: {
-                model,
-                messages,
-            },
-            responseType: 'json',
-        });
-
-        const finalData = finalResponse.body as any;
-        const finalMessage = finalData.choices[0].message;
-        return finalMessage;
-    } else {
-        return JSON.parse(assistantMessage.content);
-    }
+    return content;
 }
 
 export const db = Knex(config);

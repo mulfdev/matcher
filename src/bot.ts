@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
 import { z } from 'zod';
-import { Bot } from 'grammy';
+import { Bot, Context, InlineKeyboard, type CallbackQueryContext } from 'grammy';
 import got from 'got';
 import { ok } from 'assert';
 import { pipeline } from 'stream/promises';
@@ -12,7 +12,7 @@ import { join } from 'path';
 import { Poppler } from 'node-poppler';
 import OpenAI from 'openai';
 import { db, llm, type MessageContent } from './core.js';
-import type { JobPostingsDetails } from '../types.js';
+import type { JobPostingsDetails, User } from '../types.js';
 
 type SimilarityResult = JobPostingsDetails & { similarity: number };
 
@@ -30,6 +30,9 @@ const baseDir = join(process.cwd(), 'tmp');
 
 const DocumentMessageSchema = z.object({
     message: z.object({
+        from: z.object({
+            id: z.number(),
+        }),
         document: z.object({
             file_id: z.string(),
             file_name: z.string().optional(),
@@ -39,16 +42,141 @@ const DocumentMessageSchema = z.object({
     }),
 });
 
+const CallbackQuerySchema = z.object({
+    from: z.object({ id: z.number() }),
+});
+
 export const bot = new Bot(BOT_TOKEN);
 const poppler = new Poppler();
 
 const embeder = new OpenAI();
 
-bot.command('start', (ctx) =>
-    ctx.reply(
-        'Welcome to the Matcher. I am here to help you find your pefect job matches! Please provide your resume in PDF format to begin!'
-    )
-);
+const ACTIONS = {
+    MATCH: { id: 'button_1', label: 'Get Matched' },
+    PROFILE: { id: 'button_2', label: 'My Profile' },
+    BUTTON_3: { id: 'button_3', label: 'Button 3' },
+} as const;
+
+function createKeyboard() {
+    const keyboard = new InlineKeyboard();
+    for (const action of Object.values(ACTIONS)) {
+        keyboard.text(action.label, action.id);
+    }
+    return keyboard;
+}
+
+function singleButtonKeyboard(actionId: string) {
+    const action = Object.values(ACTIONS).find((a) => a.id === actionId);
+    if (!action) throw new Error('Invalid action ID');
+
+    return new InlineKeyboard().text(action.label, action.id);
+}
+
+function escapeHtml(text: string): string {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function formatUserProfile(user: User): string {
+    const skills = user.skills.map(escapeHtml).join(', ');
+
+    let experience = '';
+    for (const key in user.experience) {
+        const exp = user.experience[key];
+
+        if (!exp) throw new Error('Could not reply with user profile');
+
+        const responsibilities = exp.responsibilities.map(escapeHtml).join(', ');
+        experience += `<b>${escapeHtml(exp.title)}</b> at <i>${escapeHtml(exp.company)}</i> (${escapeHtml(exp.start_date)} - ${escapeHtml(exp.end_date)}): ${responsibilities}\n\n`;
+    }
+
+    return `
+<b>Career Level:</b> ${escapeHtml(user.career_level)}
+<b>Category:</b> ${escapeHtml(user.category)}
+<b>Total Experience:</b> ${escapeHtml(user.total_experience_years.toString())} years
+
+<b>Skills:</b>
+${skills}
+
+<b>Experience:</b>
+${experience}
+
+<b>Summary:</b>
+${escapeHtml(user.summary)}`;
+}
+
+async function handleButtonPress(ctx: CallbackQueryContext<Context>, actionId: string) {
+    switch (actionId) {
+        case ACTIONS.MATCH.id: {
+            const result = CallbackQuerySchema.safeParse(ctx.update.callback_query);
+
+            console.log(ctx.update.callback_query);
+
+            if (!result.success) {
+                return ctx.reply('Could not process your request');
+            }
+
+            const existingUser = await db('user')
+                .where('telegram_id', result.data.from.id.toString())
+                .first();
+
+            console.log(existingUser);
+
+            if (existingUser) {
+                const keyboard = singleButtonKeyboard(ACTIONS.PROFILE.id); // pick dynamically
+                await ctx.reply("You're already on file!", { reply_markup: keyboard });
+                return;
+            }
+
+            ctx.reply('Please provide your resume in pdf format');
+            break;
+        }
+        case ACTIONS.PROFILE.id: {
+            const result = CallbackQuerySchema.safeParse(ctx.update.callback_query);
+
+            console.log(ctx.update.callback_query);
+
+            if (!result.success) {
+                return ctx.reply('Could not process your request');
+            }
+
+            const existingUser = await db('user')
+                .where('telegram_id', result.data.from.id.toString())
+                .first();
+
+            console.log(existingUser);
+
+            if (!existingUser) {
+                ctx.reply('No Profile Found, get matched to get started');
+                return;
+            }
+
+            const message = formatUserProfile(existingUser);
+            const keyboard = singleButtonKeyboard(ACTIONS.PROFILE.id); // pick dynamically
+            await ctx.reply(message, {
+                parse_mode: 'HTML',
+                reply_markup: keyboard,
+            });
+
+            break;
+        }
+        case ACTIONS.BUTTON_3.id:
+            await ctx.answerCallbackQuery('Handled Button 3');
+            break;
+        default:
+            await ctx.answerCallbackQuery('Unknown action');
+    }
+}
+
+Object.values(ACTIONS).forEach(({ id }) => {
+    bot.callbackQuery(id, (ctx) => handleButtonPress(ctx, id));
+});
+
+bot.command('start', (ctx) => {
+    return ctx.reply(
+        'Welcome to the Matcher. I am here to help you find your pefect job! Please select one of the following',
+        { reply_markup: createKeyboard() }
+    );
+});
 // bot.on('message', (ctx) => ctx.reply('Got another message!'));
 bot.on(':document', async (ctx) => {
     const result = DocumentMessageSchema.safeParse(ctx.update);
@@ -56,7 +184,20 @@ bot.on(':document', async (ctx) => {
     if (!result.success) {
         return ctx.reply('there was a problem with your request');
     }
-    console.log(ctx.update);
+    console.log('ctx update', ctx.update);
+
+    const existingUser = await db('user')
+        .where('telegram_id', result.data.message.from.id.toString())
+        .first();
+
+    console.log(existingUser);
+
+    if (existingUser) {
+        const keyboard = singleButtonKeyboard(ACTIONS.PROFILE.id); // pick dynamically
+        await ctx.reply("You're already on file!", { reply_markup: keyboard });
+        return;
+    }
+
     const document = result.data.message.document;
     console.log('Received document:', document.file_id);
 
@@ -112,11 +253,23 @@ bot.on(':document', async (ctx) => {
             })
         );
 
-        const agentRes = await llm({ base64Images });
+        const { skills, experience, total_experience_years, career_level, category, summary } =
+            await llm({ base64Images });
 
-        console.log({ agentRes });
+        const newUserId = createId();
 
-        const skillsText = agentRes.skills.join(', ');
+        await db('user').insert({
+            id: newUserId,
+            telegram_id: result.data.message.from.id.toString(),
+            skills,
+            experience: { ...experience },
+            total_experience_years,
+            career_level,
+            category,
+            summary,
+        });
+
+        const skillsText = skills.join(', ');
         const skillsEmbedding = await embeder.embeddings.create({
             model: 'text-embedding-3-small',
             input: skillsText,
@@ -125,7 +278,7 @@ bot.on(':document', async (ctx) => {
 
         const summaryEmbedding = await embeder.embeddings.create({
             model: 'text-embedding-3-small',
-            input: agentRes.summary,
+            input: summary,
             encoding_format: 'float',
         });
 
@@ -148,7 +301,7 @@ bot.on(':document', async (ctx) => {
                 'compensation',
                 'summary',
                 db.raw(
-                    '((skill_embedding <-> ?::vector(1536)) * 0.65 + (summary_embedding <-> ?::vector(1536)) * 0.35) AS similarity',
+                    '((skill_embedding <#> ?::vector(1536)) * 0.90 + (summary_embedding <#> ?::vector(1536)) * 0.10) AS similarity',
                     [skillsVec, summaryVec]
                 )
             )
