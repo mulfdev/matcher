@@ -1,8 +1,10 @@
 export interface JobPostingsDetails {
     id: string;
     created_at: string;
+    summary_embedding?: number[];
+    skill_embedding?: number[];
     job_posting_id?: number;
-    description?: string;
+    text?: string;
     title?: string;
     location?: string;
     compensation?: string;

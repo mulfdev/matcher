@@ -1,3 +1,20 @@
+export const jobEmbedSchema = {
+    type: 'object',
+    properties: {
+        skills: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'List of explicitly mentioned skills.',
+        },
+        summary: {
+            type: 'string',
+            description: 'Concise summary of the job description',
+        },
+    },
+    required: ['skills', 'summary'],
+    additionalProperties: false,
+};
+
 export const resumeSchema = {
     type: 'object',
     properties: {
@@ -16,8 +33,20 @@ export const resumeSchema = {
                     start_date: { type: 'string', description: 'Start date (YYYY-MM)' },
                     end_date: { type: 'string', description: "End date (YYYY-MM or 'Present')" },
                     duration_months: { type: 'integer', description: 'Duration in months' },
+                    responsibilities: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Detailed descriptions of roles and achievements.',
+                    },
                 },
-                required: ['title', 'company', 'start_date', 'end_date', 'duration_months'],
+                required: [
+                    'title',
+                    'company',
+                    'start_date',
+                    'end_date',
+                    'duration_months',
+                    'responsibilities',
+                ],
             },
             description: 'Detailed breakdown of job history.',
         },
@@ -27,7 +56,7 @@ export const resumeSchema = {
         },
         career_level: {
             type: 'string',
-            enum: ['entry', 'mid', 'senior', 'executive'],
+            enum: ['entry', 'mid', 'senior', 'staff'],
             description: 'Estimated career level based on experience.',
         },
         category: {

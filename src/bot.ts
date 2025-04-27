@@ -112,74 +112,59 @@ bot.on(':document', async (ctx) => {
             })
         );
 
-        await llm({ base64Images });
+        const agentRes = await llm({ base64Images });
 
-        // const comp = await openai.chat.completions.create({
-        //     model: 'meta-llama/llama-4-maverick',
-        //     max_tokens: 1000,
-        //     temperature: 0.4,
-        //     top_p: 0.8,
-        //     messages: [
-        //         { role: 'system', content: systemPrompt },
-        //         {
-        //             role: 'user',
-        //             content: base64Images,
-        //         },
-        //     ],
-        // });
+        console.log({ agentRes });
 
-        //         ctx.reply('Analysis Complete ✅\n\nmatching you now');
-        //         ok(
-        //             comp.choices[0] &&
-        //                 comp.choices[0].message &&
-        //                 typeof comp.choices[0].message.content === 'string'
-        //         );
-        //
-        //         const agentRes = comp.choices[0].message.content;
-        //
-        //         console.log(agentRes);
-        //
-        //         const embeddingResponse = await embeder.embeddings.create({
-        //             model: 'text-embedding-3-small',
-        //             input: agentRes,
-        //             encoding_format: 'float',
-        //         });
-        //
-        //         ok(embeddingResponse.data[0] && embeddingResponse.data[0].embedding);
-        //
-        //         const embedding = embeddingResponse.data[0].embedding;
-        //
-        //         const vectorString = `[${embedding.join(',')}]`;
-        //
-        //         // Min 80% to show result
-        //
-        //         const results = (await db<SimilarityResult>('job_postings_details')
-        //             .select(
-        //                 'text',
-        //                 'title',
-        //                 'location',
-        //                 'compensation',
-        //                 'summary',
-        //                 db.raw('embeddings <-> ?::vector(1536) AS similarity', [vectorString])
-        //             )
-        //             .orderBy('similarity', 'asc')
-        //             .limit(25)) as SimilarityResult[];
-        //
-        //         const replyItems = [];
-        //
-        //         console.log(results);
-        //         for (const job of results) {
-        //             replyItems.push(`
-        // **Title:** ${job.title}
-        // **Location:** ${job.location}
-        // **Compensation:** ${job.compensation}
-        // **Summary:** ${job.summary}
-        // `);
-        //         }
-        //
-        //         const replyMessage = `Heres what i found for you!\n\n${replyItems.join('\n\n')}`;
-        //
-        //         await ctx.reply(replyMessage, { parse_mode: 'Markdown' });
+        const skillsText = agentRes.skills.join(', ');
+        const skillsEmbedding = await embeder.embeddings.create({
+            model: 'text-embedding-3-small',
+            input: skillsText,
+            encoding_format: 'float',
+        });
+
+        const summaryEmbedding = await embeder.embeddings.create({
+            model: 'text-embedding-3-small',
+            input: agentRes.summary,
+            encoding_format: 'float',
+        });
+
+        if (!skillsEmbedding?.data?.[0]?.embedding) {
+            throw new Error('Could not generate embeddings for skills');
+        }
+
+        if (!summaryEmbedding?.data?.[0]?.embedding) {
+            throw new Error('Could not generate embeddings for skills');
+        }
+
+        const skillsVec = `[${skillsEmbedding.data[0].embedding.join(',')}]`;
+        const summaryVec = `[${summaryEmbedding.data[0].embedding.join(',')}]`;
+
+        const results = await db<SimilarityResult>('job_postings_details')
+            .select(
+                'id',
+                'title',
+                'location',
+                'compensation',
+                'summary',
+                db.raw(
+                    '((skill_embedding <-> ?::vector(1536)) * 0.75 + (summary_embedding <-> ?::vector(1536)) * 0.25) AS similarity',
+                    [skillsVec, summaryVec]
+                )
+            )
+            .orderBy('similarity', 'asc')
+            .limit(7);
+
+        const replyItems = results.map(
+            (job) =>
+                `Title: ${job.title}\nLocation: ${job.location}\nCompensation: ${job.compensation ?? 'N/A'}\nSummary: ${job.summary?.split('.')[0]}`
+        );
+
+        console.log(results);
+
+        const replyMessage = `Here's what I found for you!\n\n${replyItems.join('\n\n')}`;
+
+        await ctx.reply(replyMessage);
 
         // TODO: Inject match feedback into matching. start list of liked jobs and add that into
         //the matching process. every job that got a thumbs up, add that into match

@@ -1,7 +1,7 @@
 import { ok } from 'assert';
 import Knex from 'knex';
 import got from 'got';
-import { toolMap, tools } from './tools.js';
+import { toolMap } from './tools.js';
 import { systemPrompt } from './prompts.js';
 import { resumeSchema } from './schema.js';
 
@@ -70,10 +70,7 @@ export async function llm({ base64Images }: LlmParams) {
     });
     const initialData = initialResponse.body as any;
 
-    console.log(initialData);
-
     const assistantMessage = initialData.choices[0].message;
-    console.log(assistantMessage);
     messages.push(assistantMessage);
 
     // Step 2: Handle tool calls if present
@@ -109,10 +106,9 @@ export async function llm({ base64Images }: LlmParams) {
 
         const finalData = finalResponse.body as any;
         const finalMessage = finalData.choices[0].message;
-        console.log(finalMessage.content);
+        return finalMessage;
     } else {
-        // No tool call; output assistant's message
-        console.log(assistantMessage.content);
+        return JSON.parse(assistantMessage.content);
     }
 }
 
