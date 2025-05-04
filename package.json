@@ -15,7 +15,6 @@
     },
     "keywords": [],
     "author": "mulf",
-    "license": "MIT",
     "devDependencies": {
         "@eslint/js": "^9.24.0",
         "@flydotio/dockerfile": "^0.7.10",
@@ -28,7 +27,11 @@
         "typescript-eslint": "^8.29.1"
     },
     "dependencies": {
-        "@google/genai": "^0.10.0",
+        "@grammyjs/conversations": "^1.2.0",
+        "@grammyjs/files": "^1.0.4",
+        "@grammyjs/menu": "^1.2.1",
+        "@grammyjs/parse-mode": "^1.9.0",
+        "grammy": "^1.21.1",
         "@paralleldrive/cuid2": "^2.2.2",
         "dotenv": "^16.4.7",
         "got": "^14.4.7",
