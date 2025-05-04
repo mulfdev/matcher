@@ -1,3 +1,17 @@
+import { Context, SessionFlavor } from 'grammy';
+import { ConversationFlavor } from '@grammyjs/conversations';
+import { HydrateFlavor } from '@grammyjs/hydrate';
+
+export type MessageContent =
+    | { type: 'text'; text: string }
+    | {
+          type: 'image_url';
+          image_url: {
+              url: string;
+              detail: 'auto';
+          };
+      };
+
 export interface JobPostingsDetails {
     id: string;
     created_at: string;
@@ -28,11 +42,21 @@ export interface User {
     skills: string[];
     telegram_id: string;
     experience: Experience[];
-    total_experience_years: number; // NUMERIC(4,1)
+    total_experience_years: number;
     career_level: 'entry' | 'mid' | 'senior' | 'staff';
     category: string;
     summary: string;
 }
+
+export type SimilarityResult = JobPostingsDetails & { similarity: number };
+
+export interface SessionData {
+    matches: SimilarityResult[];
+    index: number;
+    user?: User;
+}
+
+export type MyContext = HydrateFlavor<Context> & SessionFlavor<SessionData> & ConversationFlavor;
 
 declare module 'knex/types/tables.js' {
     interface Tables {

@@ -1,29 +1,19 @@
+// src/core.ts
 import { ok } from 'assert';
 import Knex from 'knex';
 import got from 'got';
 import { systemPrompt } from './prompts.js';
 import { resumeSchema } from './schema.js';
-import type { User } from '../types.js';
-
-export type MessageContent =
-    | { type: 'text'; text: string }
-    | {
-          type: 'image_url';
-          image_url: {
-              url: string;
-              detail: 'auto';
-          };
-      };
-
-type LlmParams = {
-    base64Images?: MessageContent[];
-};
+import { createId } from '@paralleldrive/cuid2';
+import type { MyContext } from '../types.js';
+import { getUserFromId } from './utils.js';
 
 const { OPENROUTER_KEY, DB_HOST, DB_PORT, DB_NAME, DB_USER } = process.env;
 
 ok(DB_HOST && DB_PORT && DB_NAME && DB_USER, 'DB env vars must be set');
 ok(OPENROUTER_KEY, 'OPENROUTER_KEY MUST BE DEFINED');
 
+// Database configuration
 const config = {
     client: 'pg',
     connection: {
@@ -34,18 +24,16 @@ const config = {
     },
 };
 
-export async function llm({ base64Images }: LlmParams) {
-    if (!base64Images) {
-        throw new Error('Must have resume images with request');
-    }
+export const db = Knex(config);
 
+export async function analyzeResume(base64Images: MessageContent[]) {
     const model = 'google/gemini-2.5-flash-preview';
-    const messages: any[] = [
+    const messages = [
         { role: 'user', content: systemPrompt },
         { role: 'user', content: base64Images },
     ];
 
-    const initialResponse = await got.post('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await got.post('https://openrouter.ai/api/v1/chat/completions', {
         headers: {
             Authorization: `Bearer ${OPENROUTER_KEY}`,
             'Content-Type': 'application/json',
@@ -57,23 +45,24 @@ export async function llm({ base64Images }: LlmParams) {
             top_p: 0.9,
             frequency_penalty: 0.5,
             presence_penalty: 0,
-            response_format: {
-                type: 'json_schema',
-                json_schema: {
-                    name: 'analyze_resume',
-                    strict: true,
-                    schema: resumeSchema,
-                },
-            },
+            response_format: { type: 'json_schema', json_schema: resumeSchema },
         },
         responseType: 'json',
     });
-    const initialData = initialResponse.body as any;
 
-    const assistantMessage = initialData.choices[0].message;
-    const content: Omit<User, 'id'> = JSON.parse(assistantMessage.content);
-
+    const data = response.body as any;
+    const content = JSON.parse(data.choices[0].message.content);
     return content;
 }
 
-export const db = Knex(config);
+export async function saveUserData(ctx: MyContext, userData: any) {
+    const newUserId = createId();
+
+    await db('user').insert({
+        id: newUserId,
+        telegram_id: ctx.from?.id.toString(),
+        ...userData,
+    });
+
+    return await getUserFromId(ctx.from?.id.toString());
+}
