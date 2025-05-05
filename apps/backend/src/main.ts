@@ -3,7 +3,7 @@ import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifySession from '@fastify/session';
-import cookie, { type FastifyCookieOptions } from '@fastify/cookie';
+import cookie from '@fastify/cookie';
 import { OAuth2Client } from 'google-auth-library';
 import type { AuthBody } from './types.js';
 import { authSchema } from './schemas.js';
@@ -102,6 +102,12 @@ app.get('/auth/me', async (request, reply) => {
         email: request.session.email,
         name: request.session.name,
     };
+});
+
+app.get('/logout', async (req, reply) => {
+    await req.session.destroy();
+    reply.clearCookie('sessionId');
+    return reply.status(200).send({})
 });
 
 const start = async () => {
