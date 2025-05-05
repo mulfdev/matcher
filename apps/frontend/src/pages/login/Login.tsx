@@ -1,10 +1,10 @@
 import { GoogleLogin } from '@react-oauth/google';
 import { NavLink, useNavigate } from 'react-router';
-import { apiUrl, fetcher } from '~/core';
+import { fetcher } from '~/core';
 import { GoogleAuthRes } from '~/types';
 
 export default function Login() {
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
@@ -34,7 +34,7 @@ export default function Login() {
                   },
                 });
                 console.log(credentialResponse);
-                //navigate('/dashboard');
+                navigate('/dashboard');
               }}
               onError={() => {
                 console.log('Login Failed');
