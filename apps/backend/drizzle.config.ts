@@ -8,7 +8,7 @@ assert(typeof DATABASE_URL === 'string', 'Database url must be set');
 
 export default defineConfig({
     out: './drizzle',
-    schema: './src/db/schema.ts',
+    schema: './db/schema.ts',
     dialect: 'postgresql',
     dbCredentials: {
         url: DATABASE_URL,

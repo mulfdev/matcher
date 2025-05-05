@@ -1,4 +1,4 @@
-import { ok } from 'assert';
+import assert from 'assert';
 import Knex from 'knex';
 import got from 'got';
 import { systemPrompt } from './prompts.js';
@@ -19,19 +19,14 @@ type LlmParams = {
     base64Images?: MessageContent[];
 };
 
-const { OPENROUTER_KEY, DB_HOST, DB_PORT, DB_NAME, DB_USER } = process.env;
+const { OPENROUTER_KEY, DATABASE_URL } = process.env;
 
-ok(DB_HOST && DB_PORT && DB_NAME && DB_USER, 'DB env vars must be set');
-ok(OPENROUTER_KEY, 'OPENROUTER_KEY MUST BE DEFINED');
+assert(typeof DATABASE_URL === 'string', 'DB env vars must be set');
+assert(typeof OPENROUTER_KEY === 'string', 'OPENROUTER_KEY MUST BE DEFINED');
 
 const config = {
     client: 'pg',
-    connection: {
-        host: DB_HOST,
-        port: DB_PORT,
-        database: DB_NAME,
-        user: DB_USER,
-    },
+    connection: DATABASE_URL,
 };
 
 export async function llm({ base64Images }: LlmParams) {
@@ -40,7 +35,7 @@ export async function llm({ base64Images }: LlmParams) {
     }
 
     const model = 'google/gemini-2.5-flash-preview';
-    const messages: any[] = [
+    const messages = [
         { role: 'user', content: systemPrompt },
         { role: 'user', content: base64Images },
     ];
@@ -68,12 +63,24 @@ export async function llm({ base64Images }: LlmParams) {
         },
         responseType: 'json',
     });
-    const initialData = initialResponse.body as any;
 
-    const assistantMessage = initialData.choices[0].message;
-    const content: Omit<User, 'id'> = JSON.parse(assistantMessage.content);
+    const initialData = initialResponse.body as {
+        choices?: {
+            message?: {
+                content?: string;
+            };
+        }[];
+    };
+
+    const assistantMessage = initialData?.choices?.[0]?.message;
+
+    // Add null check for content
+    if (typeof assistantMessage?.content !== 'string') {
+        throw new Error('Invalid content format in OpenRouter response');
+    }
+
+    const content = JSON.parse(assistantMessage.content) as Omit<User, 'id'>;
 
     return content;
 }
-
 export const db = Knex(config);

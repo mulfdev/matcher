@@ -20,6 +20,7 @@ export default tseslint.config(
     },
     {
         rules: {
+            '@typescript-eslint/consistent-type-definitions': 'off',
             '@typescript-eslint/no-floating-promises': 'error',
             '@typescript-eslint/no-misused-promises': 'error',
             '@typescript-eslint/require-await': 'error',
