@@ -16,29 +16,27 @@ declare module 'fastify' {
     }
 }
 
-const { GOOGLE_CLIENT_ID } = process.env;
+const { GOOGLE_CLIENT_ID, COOKIE_SECRET } = process.env;
 
 assert(typeof GOOGLE_CLIENT_ID === 'string', 'GOOGLE_CLIENT_ID must be defined');
+assert(typeof COOKIE_SECRET === 'string', 'COOKIE_SECRET must be set');
 
 const app = Fastify({
     logger: true,
 });
 
-app.register(cookie, {
-    secret: 'my-secret',
-    parseOptions: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60, // 1 week
-        signed: true,
-    },
-} as FastifyCookieOptions);
+app.register(cookie);
 
 app.register(fastifySession, {
-    secret: 'session-secret-different-from-cookie-secret',
+    secret: COOKIE_SECRET,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // In milliseconds
+    },
+    saveUninitialized: false,
 });
-
 app.register(cors, {
     origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
     credentials: true,
@@ -80,6 +78,7 @@ app.post<{ Body: AuthBody }>(
             request.session.userId = payload.sub;
             request.session.email = payload.email;
             request.session.name = payload.name;
+            await request.session.save();
 
             return {
                 email: payload.email,

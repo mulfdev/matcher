@@ -28,7 +28,7 @@ export default function Login() {
               onSuccess={async (credentialResponse) => {
                 await fetcher<GoogleAuthRes>({
                   method: 'POST',
-                  url: `${apiUrl}/auth/google`,
+                  url: `/auth/google`,
                   body: {
                     credential: credentialResponse.credential,
                   },
@@ -41,6 +41,15 @@ export default function Login() {
               }}
               useOneTap
             />
+
+            <button
+              onClick={async () => {
+                const res = await fetcher({ url: '/auth/me' });
+                console.log(res);
+              }}
+            >
+              Test auth
+            </button>
           </div>
         </div>
       </main>

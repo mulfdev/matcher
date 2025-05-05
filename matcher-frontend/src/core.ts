@@ -23,13 +23,14 @@ export async function fetcher<TResponse, TBody = unknown>(
 ): Promise<TResponse> {
   const { url, method = 'GET', headers = {}, signal, body } = options;
 
-  const response = await fetch(url, {
+  const response = await fetch(`${apiUrl}${url}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
       ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
+    credentials: 'include',
     signal,
   });
 
