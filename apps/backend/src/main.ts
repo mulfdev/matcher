@@ -8,6 +8,13 @@ import cookie from '@fastify/cookie';
 import { OAuth2Client } from 'google-auth-library';
 import type { AuthBody } from './types.js';
 import { authSchema } from './schemas.js';
+import { createId } from '@paralleldrive/cuid2';
+import { join } from 'path';
+import { mkdirSync, existsSync, createWriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
+import { readdir, readFile, rm } from 'fs/promises';
+import { Poppler } from 'node-poppler';
+import { db, llm, type MessageContent } from './core.js';
 
 const { GOOGLE_CLIENT_ID, COOKIE_SECRET } = process.env;
 
@@ -15,6 +22,7 @@ assert(typeof GOOGLE_CLIENT_ID === 'string', 'GOOGLE_CLIENT_ID must be defined')
 assert(typeof COOKIE_SECRET === 'string', 'COOKIE_SECRET must be set');
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+const poppler = new Poppler();
 
 const app = Fastify({
     logger: true,
@@ -110,11 +118,75 @@ app.post('/upload', async (request, reply) => {
         return reply.status(400).send({ error: 'Only PDF files are allowed' });
     }
 
-    const file = await data.toBuffer();
+    const fileBuffer = await data.toBuffer();
 
-    console.log(file)
+    // Save file to temp directory
+    const tempDir = createId();
+    const baseTempDir = join(process.cwd(), 'tmp', tempDir);
+    mkdirSync(baseTempDir, { recursive: true });
 
-    return reply.send({ message: 'File uploaded successfully' });
+    const pdfPath = join(baseTempDir, `${createId()}.pdf`);
+
+    await pipeline(
+        async function*() { yield fileBuffer; }(),
+        createWriteStream(pdfPath)
+    );
+
+    if (!existsSync(pdfPath)) {
+        return reply.status(500).send({ error: 'Failed to save uploaded file' });
+    }
+
+    // Convert PDF pages to JPEG images
+    const imgPath = join(baseTempDir, createId());
+
+    await poppler.pdfToCairo(pdfPath, imgPath, {
+        jpegFile: true,
+        resolutionXAxis: 72,
+        resolutionYAxis: 72,
+    });
+
+    // Read JPEG files
+    const files = await readdir(baseTempDir);
+    const jpgFiles = files.filter(f => f.toLowerCase().endsWith('.jpg') || f.toLowerCase().endsWith('.jpeg'));
+
+    // Convert JPEGs to base64 images for LLM
+    const base64Images: MessageContent[] = await Promise.all(jpgFiles.map(async (file) => {
+        const fullPath = join(baseTempDir, file);
+        const data = await readFile(fullPath);
+        return {
+            type: 'image_url',
+            image_url: {
+                url: `data:image/jpeg;base64,${data.toString('base64')}`,
+                detail: 'auto',
+            },
+        };
+    }));
+
+    try {
+        const { skills, experience, total_experience_years, career_level, category, summary } = await llm({ base64Images });
+
+        // const newUserId = createId();
+        // // TODO: Adapt user identification as needed
+        // await db('user').insert({
+        //     id: newUserId,
+        //     skills,
+        //     experience: { ...experience },
+        //     total_experience_years,
+        //     career_level,
+        //     category,
+        //     summary,
+        // });
+        //
+        console.log(skills, experience, summary)
+
+        await rm(baseTempDir, { recursive: true, force: true });
+
+        return reply.send({ message: 'File processed and user data saved successfully' });
+    } catch (error) {
+        console.error(error);
+        await rm(baseTempDir, { recursive: true, force: true });
+        return reply.status(500).send({ error: 'Failed to process PDF' });
+    }
 });
 
 app.get('/auth/me', async (request, reply) => {
