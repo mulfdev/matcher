@@ -3,27 +3,24 @@ import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import fastifySession from '@fastify/session';
+import fastifyMultipart from '@fastify/multipart';
 import cookie from '@fastify/cookie';
 import { OAuth2Client } from 'google-auth-library';
 import type { AuthBody } from './types.js';
 import { authSchema } from './schemas.js';
-
-declare module 'fastify' {
-    interface FastifySessionObject {
-        userId: string;
-        email: string;
-        name: string;
-    }
-}
 
 const { GOOGLE_CLIENT_ID, COOKIE_SECRET } = process.env;
 
 assert(typeof GOOGLE_CLIENT_ID === 'string', 'GOOGLE_CLIENT_ID must be defined');
 assert(typeof COOKIE_SECRET === 'string', 'COOKIE_SECRET must be set');
 
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
 const app = Fastify({
     logger: true,
 });
+
+// PLUGINS
 
 app.register(cookie);
 
@@ -42,11 +39,21 @@ app.register(cors, {
     credentials: true,
 });
 
+
+app.register(fastifyMultipart, {
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB max
+        files: 1,
+    },
+});
+
+
+// ROUTES
+
 app.get('/', () => {
     return { hello: 'world' };
 });
 
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 app.post<{ Body: AuthBody }>(
     '/auth/google',
@@ -91,6 +98,24 @@ app.post<{ Body: AuthBody }>(
         }
     }
 );
+
+
+app.post('/upload', async (request, reply) => {
+    const data = await request.file();
+    if (!data) {
+        return reply.status(400).send({ error: 'No file uploaded' });
+    }
+
+    if (data.mimetype !== 'application/pdf') {
+        return reply.status(400).send({ error: 'Only PDF files are allowed' });
+    }
+
+    const file = await data.toBuffer();
+
+    console.log(file)
+
+    return reply.send({ message: 'File uploaded successfully' });
+});
 
 app.get('/auth/me', async (request, reply) => {
     if (!request.session.userId) {
