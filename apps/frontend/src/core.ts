@@ -23,20 +23,32 @@ export async function fetcher<TResponse, TBody = unknown>(
 ): Promise<TResponse> {
   const { url, method = 'GET', headers = {}, signal, body } = options;
 
-  const response = await fetch(`${apiUrl}${url}`, {
+  const isFormData = body instanceof FormData;
+
+  const fetchOptions: RequestInit = {
     method,
     headers: {
-      'Content-Type': 'application/json',
       ...headers,
     },
-    body: body ? JSON.stringify(body) : undefined,
     credentials: 'include',
     signal,
-  });
+  };
 
+  if (body) {
+    if (isFormData) {
+      fetchOptions.body = body;
+    } else {
+      fetchOptions.headers = {
+        'Content-Type': 'application/json',
+        ...headers,
+      };
+      fetchOptions.body = JSON.stringify(body);
+    }
+  }
+
+  const response = await fetch(`${apiUrl}${url}`, fetchOptions);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
-
   return response.json();
 }
