@@ -15,14 +15,17 @@ export default function Dashboard() {
     formData.append("file", files[0]);
 
     try {
-      const res = await fetcher({
+      await fetcher({
         url: "/upload",
         method: "POST",
         body: formData,
       });
 
     } catch (error) {
-      alert("Upload error: " + error.message);
+      if (error instanceof Error) {
+        console.log("Upload error: " + error.message);
+      }
+      console.log(error)
     } finally {
       setUploading(false);
     }
