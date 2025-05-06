@@ -1,45 +1,81 @@
 import { useState, useCallback } from "react"
 import Dropzone from "react-dropzone"
 import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline"
+import { fetcher } from "~/core";
 
 export default function Dashboard() {
-  const [files, setFiles] = useState([])
+  const [files, setFiles] = useState<File[] | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles) => {
-    setFiles(acceptedFiles)
-    console.log(acceptedFiles)
-  }, [])
+  const uploadFile = async () => {
+    if (!files || files.length === 0) return;
 
-  const removeFile = (fileToRemove) => {
-    setFiles(files.filter((file) => file !== fileToRemove))
-  }
+    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", files[0]);
+
+    try {
+      const res = await fetcher({
+        url: "/upload",
+        method: "POST",
+        body: formData,
+      });
+
+    } catch (error) {
+      alert("Upload error: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const maxSize = 5 * 1024 * 1024;
+    const file = acceptedFiles[0];
+
+    if (!file) {
+      setFiles([]);
+      return;
+    }
+
+    if (file.type !== "application/pdf" || file.size > maxSize) {
+      alert(`File rejected: ${file.name}. Only a single PDF file up to 5MB is allowed.`);
+      setFiles([]);
+      return;
+    }
+
+    setFiles([file]);
+    console.log([file]);
+  }, []);
+
+  const removeFile = () => {
+    setFiles(null);
+  };
 
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-white text-3xl font-bold mb-6">Get Matched</h1>
 
-      <Dropzone onDrop={onDrop}>
+      <Dropzone onDrop={onDrop} multiple={false} maxFiles={1} disabled={files !== null}>
         {({ getRootProps, getInputProps, isDragActive }) => (
           <div
             {...getRootProps()}
             className={`
-              relative 
-              border-2 
-              border-dashed 
-              rounded-xl 
-              p-8 
-              transition-all 
-              duration-300 
-              ease-in-out 
-              cursor-pointer 
-              ${isDragActive
-                ? "border-purple-500 bg-purple-900/20"
-                : "border-gray-600 hover:border-purple-400 hover:bg-gray-800/50"
-              }
-              ${files.length > 0 ? "bg-gray-800/30" : ""}
-            `}
-          >
-            <input {...getInputProps()} />
+            relative
+            border-2
+            border-dashed
+            rounded-xl
+            p-8
+            transition-all
+            duration-300
+            ease-in-out
+            cursor-pointer
+            ${files !== null ? 'opacity-50 cursor-not-allowed' : ''}
+            ${isDragActive && files === null ? 'border-purple-500 bg-purple-900/20' : 'border-gray-600 hover:border-purple-400 hover:bg-gray-800/50'}
+            ${files !== null ? 'bg-gray-800/30' : ''}
+          `}
+            style={{ pointerEvents: files !== null ? 'none' : undefined }}
+          >          <input {...getInputProps()} />
 
             <div className="flex flex-col items-center justify-center gap-4">
               <div
@@ -65,19 +101,28 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-      </Dropzone>
+      </Dropzone >
+      {files && files.length > 0 && (
+        <button
+          onClick={uploadFile}
+          disabled={uploading}
+          className="mt-4 px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
+        >
+          {uploading ? "Uploading..." : "Upload File"}
+        </button>
+      )}
 
-      {files.length > 0 && (
+      {files && files.length > 0 && (
         <div className="mt-6 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-white font-medium">Selected Files</h3>
-            <button onClick={() => setFiles([])} className="text-gray-400 hover:text-white text-sm">
+            <button onClick={() => setFiles(null)} className="text-gray-400 hover:text-white text-sm">
               Clear all
             </button>
           </div>
 
           <ul className="space-y-2">
-            {files.map((file, index) => (
+            {files?.map((file, index) => (
               <li key={index} className="flex items-center justify-between bg-gray-800 rounded-md p-3">
                 <div className="flex items-center gap-3">
                   <DocumentIcon className="h-5 w-5 text-purple-400" />
@@ -86,7 +131,7 @@ export default function Dashboard() {
                     <p className="text-gray-400 text-xs">{(file.size / 1024).toFixed(2)} KB</p>
                   </div>
                 </div>
-                <button onClick={() => removeFile(file)} className="text-gray-400 hover:text-white">
+                <button onClick={() => removeFile()} className="text-gray-400 hover:text-white">
                   <XMarkIcon className="h-5 w-5" />
                 </button>
               </li>
@@ -94,7 +139,7 @@ export default function Dashboard() {
           </ul>
         </div>
       )}
-    </div>
+    </div >
   )
 }
 
