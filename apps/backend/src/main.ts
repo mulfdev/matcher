@@ -14,7 +14,7 @@ import { mkdirSync, existsSync, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { readdir, readFile, rm } from 'fs/promises';
 import { Poppler } from 'node-poppler';
-import { db, llm, type MessageContent } from './core.js';
+import { llm, type MessageContent } from './core.js';
 
 const { GOOGLE_CLIENT_ID, COOKIE_SECRET } = process.env;
 
@@ -128,7 +128,10 @@ app.post('/upload', async (request, reply) => {
     const pdfPath = join(baseTempDir, `${createId()}.pdf`);
 
     await pipeline(
-        async function*() { yield fileBuffer; }(),
+        async function*() {
+            yield fileBuffer
+            await Promise.resolve();
+        }(),
         createWriteStream(pdfPath)
     );
 
@@ -163,7 +166,8 @@ app.post('/upload', async (request, reply) => {
     }));
 
     try {
-        const { skills, experience, total_experience_years, career_level, category, summary } = await llm({ base64Images });
+        /* const { skills, experience, total_experience_years, career_level, category, summary } = await llm({ base64Images }); */
+        const { skills, experience, summary } = await llm({ base64Images });
 
         // const newUserId = createId();
         // // TODO: Adapt user identification as needed
@@ -181,7 +185,7 @@ app.post('/upload', async (request, reply) => {
 
         await rm(baseTempDir, { recursive: true, force: true });
 
-        return reply.send({ message: 'File processed and user data saved successfully' });
+        return await reply.send({ message: 'File processed and user data saved successfully' });
     } catch (error) {
         console.error(error);
         await rm(baseTempDir, { recursive: true, force: true });
