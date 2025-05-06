@@ -1,18 +1,29 @@
 import { createBrowserRouter } from 'react-router';
-import Login from '~/pages/login/Login';
-import Home from '~/pages/home/Home';
-import Dashboard from '~/pages/dashboard/Dashboard';
+import { lazy, Suspense } from 'react';
 import DashboardLayout from '~/layouts/DashboardLayout';
-import DashboardMatches from '~/pages/dashboard/Matches';
+
+const Login = lazy(() => import('~/pages/login/Login'));
+const Home = lazy(() => import('~/pages/home/Home'));
+const Dashboard = lazy(() => import('~/pages/dashboard/Dashboard'));
+const DashboardMatches = lazy(() => import('~/pages/dashboard/Matches'));
+
+function withSuspense(Component: React.ComponentType) {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Component />
+    </Suspense>
+  );
+}
 
 export const router = createBrowserRouter([
-  { path: '/', element: <Home /> },
-  { path: 'login', element: <Login /> },
+  { path: '/', element: withSuspense(Home) },
+  { path: 'login', element: withSuspense(Login) },
   {
     path: "/dashboard",
     Component: DashboardLayout,
     children: [
       { index: true, Component: Dashboard },
-      { path: "matches", Component: DashboardMatches }
-    ]
-  }])
+      { path: "matches", Component: DashboardMatches },
+    ],
+  }
+]);
