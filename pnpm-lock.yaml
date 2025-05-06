@@ -40,6 +40,9 @@ importers:
       knex:
         specifier: ^3.1.0
         version: 3.1.0(pg@8.15.6)
+      node-poppler:
+        specifier: ^8.0.1
+        version: 8.0.1
       pg:
         specifier: ^8.15.6
         version: 8.15.6
@@ -1031,6 +1034,10 @@ packages:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
 
+  camelcase@6.3.0:
+    resolution: {integrity: sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==}
+    engines: {node: '>=10'}
+
   caniuse-lite@1.0.30001717:
     resolution: {integrity: sha512-auPpttCq6BDEG8ZAuHJIplGw6GODhjw+/11e7IjpnYCxZcW/ONgPs0KVBJ0d1bY3e2+7PRe5RCLyP+PfwVgkYw==}
 
@@ -1800,6 +1807,10 @@ packages:
     peerDependenciesMeta:
       encoding:
         optional: true
+
+  node-poppler@8.0.1:
+    resolution: {integrity: sha512-OUURtoe7bFPOLgx7gjbSE+7sJFVVnVFTDgKzYBZYNClzT2c8INnk/usPQ1GfGVDJTc3nGUgcsdiCrCQWRvhgyA==}
+    engines: {node: '>=20'}
 
   node-releases@2.0.19:
     resolution: {integrity: sha512-xxOWJsBKtzAq7DY0J+DTzuz58K8e7sJbdgwkbMWQe8UYB6ekmsQ45q0M/tJDsGaZmbC+l7n57UV8Hl5tHxO9uw==}
@@ -3356,6 +3367,8 @@ snapshots:
 
   callsites@3.1.0: {}
 
+  camelcase@6.3.0: {}
+
   caniuse-lite@1.0.30001717: {}
 
   chalk@4.1.2:
@@ -4114,6 +4127,11 @@ snapshots:
   node-fetch@2.7.0:
     dependencies:
       whatwg-url: 5.0.0
+
+  node-poppler@8.0.1:
+    dependencies:
+      camelcase: 6.3.0
+      semver: 7.7.1
 
   node-releases@2.0.19: {}
 
