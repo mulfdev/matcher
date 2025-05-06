@@ -18,7 +18,7 @@ import { readdir, readFile, rm } from 'fs/promises';
 import { join } from 'path';
 import { Poppler } from 'node-poppler';
 import OpenAI from 'openai';
-import { db, llm, type MessageContent } from './core.js';
+import { db, llm, type MessageContent } from '../src/core.js';
 import type { JobPostingsDetails, User } from '../types.js';
 
 type SimilarityResult = JobPostingsDetails & { similarity: number };
@@ -261,7 +261,7 @@ bot.on(':document', async (ctx) => {
 
     try {
         const getFileUrl = `https://api.telegram.org/bot${BOT_TOKEN}/getFile?file_id=${document.file_id}`;
-        const fileUrl = (await got.get(getFileUrl).json()) as FileResult;
+        const fileUrl = (await got.get(getFileUrl).json());
 
         ok(fileUrl.result);
 

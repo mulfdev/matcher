@@ -1,19 +1,19 @@
 import assert from 'assert';
 import Knex from 'knex';
 import got from 'got';
-import { systemPrompt } from './prompts.js';
-import { resumeSchema } from './schema.js';
+import { systemPrompt } from '../old-bot-src/prompts.js';
+import { resumeSchema } from '../old-bot-src/schema.js';
 import type { User } from '../types.js';
 
 export type MessageContent =
     | { type: 'text'; text: string }
     | {
-          type: 'image_url';
-          image_url: {
-              url: string;
-              detail: 'auto';
-          };
-      };
+        type: 'image_url';
+        image_url: {
+            url: string;
+            detail: 'auto';
+        };
+    };
 
 type LlmParams = {
     base64Images?: MessageContent[];

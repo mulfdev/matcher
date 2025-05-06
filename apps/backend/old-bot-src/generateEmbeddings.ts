@@ -2,7 +2,7 @@ import 'dotenv/config';
 import got from 'got';
 import OpenAI from 'openai';
 import pLimit from 'p-limit';
-import { db } from './core.js';
+import { db } from '../src/core.js';
 import type { JobPostingsDetails } from '../types.js';
 import assert from 'assert';
 
