@@ -18,5 +18,10 @@
     "sourceMap": true,
 
     "lib": ["es2022"]
-  }
+  },
+   "exclude": [
+    "node_modules",
+    "dist",
+    "old-bot-src"
+  ]
 }
