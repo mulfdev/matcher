@@ -1,3 +1,34 @@
+import '@fastify/session';
+import type { authSchema } from './src/routeSchema.js';
+
+declare module 'fastify' {
+    interface Session {
+        userId: string;
+        email: string;
+        name: string;
+    }
+}
+
+
+type InferSchemaType<T> = T extends { properties: infer P }
+    ? {
+        [K in keyof P]: P[K] extends { type: 'string' }
+        ? string
+        : P[K] extends { type: 'number' }
+        ? number
+        : P[K] extends { type: 'boolean' }
+        ? boolean
+        : P[K] extends { type: 'object' }
+        ? InferSchemaType<P[K]>
+        : P[K] extends { type: 'array' }
+        ? unknown[]
+        : unknown;
+    }
+    : never;
+
+export type AuthBody = InferSchemaType<typeof authSchema>;
+
+
 export interface JobPostingsDetails {
     id: string;
     created_at: string;
@@ -24,12 +55,19 @@ export interface Experience {
 }
 
 export interface User {
-    id: string; // CUID
-    skills: string[];
-    telegram_id: string;
-    experience: Experience[];
-    total_experience_years: number; // NUMERIC(4,1)
+    id: string;
+    oauth_user_id: string
+    oauth_provider: string;
+    email: string;
+    name: string;
+}
+
+export interface UserProfile {
+    user_id: string;
     career_level: 'entry' | 'mid' | 'senior' | 'staff';
+    total_experience_years: number; // NUMERIC(4,1)
+    experience: Experience[];
+    skills: string[];
     category: string;
     summary: string;
 }
@@ -38,5 +76,6 @@ declare module 'knex/types/tables.js' {
     interface Tables {
         job_postings_details: JobPostingsDetails;
         user: User;
+        user_profile: UserProfile;
     }
 }

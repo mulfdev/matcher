@@ -7,8 +7,9 @@
         "build": "tsc",
         "start": "tsc && node ./dist/src/main.js",
         "dev": "tsx watch ./src/main.ts",
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "lint": "eslint ."
+        "generateEmbeddings": "tsx ./src/generateEmbeddings.ts",
+        "lint": "eslint .",
+        "format": "pnpx prettier --write src/"
     },
     "keywords": [],
     "author": "mulf",
