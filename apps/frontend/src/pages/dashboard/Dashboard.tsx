@@ -3,11 +3,13 @@ import Dropzone from 'react-dropzone';
 import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { fetcher } from '~/core';
 import ResumeViz from './ResumeVis';
+import { ResumeData } from '~/types';
 
 export default function Dashboard() {
   const [files, setFiles] = useState<File[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [processed, setProcessed] = useState(false);
+  const [data, setData] = useState<ResumeData | null>(null);
 
   const uploadFile = async () => {
     if (!files || files.length === 0) return;
@@ -17,12 +19,13 @@ export default function Dashboard() {
     formData.append('file', files[0]);
 
     try {
-      await fetcher({
+      const res = await fetcher({
         url: '/upload',
         method: 'POST',
         body: formData,
       });
       setProcessed(true);
+      setData(res.data as ResumeData);
     } catch (error) {
       if (error instanceof Error) {
         console.log('Upload error: ' + error.message);
@@ -57,7 +60,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="max-w-3xl mx-auto p-2 md:p-6">
       {!processed ? (
         <div>
           <h1 className="text-white text-3xl font-bold mb-6">Get Matched</h1>
@@ -156,7 +159,7 @@ export default function Dashboard() {
           )}
         </div>
       ) : null}
-      {processed ? <ResumeViz /> : null}
+      {processed && data ? <ResumeViz data={data} /> : null}
     </div>
   );
 }
