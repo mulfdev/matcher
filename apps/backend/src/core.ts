@@ -1,19 +1,19 @@
 import assert from 'assert';
 import Knex from 'knex';
 import got from 'got';
-import { systemPrompt } from '../old-bot-src/prompts.js';
+import { systemPrompt } from './prompts.js';
 import { resumeSchema } from './schema.js';
-import type { User } from '../types.js';
+import type { UserProfile } from '../types.js';
 
 export type MessageContent =
     | { type: 'text'; text: string }
     | {
-        type: 'image_url';
-        image_url: {
-            url: string;
-            detail: 'auto';
-        };
-    };
+          type: 'image_url';
+          image_url: {
+              url: string;
+              detail: 'auto';
+          };
+      };
 
 type LlmParams = {
     base64Images?: MessageContent[];
@@ -21,13 +21,13 @@ type LlmParams = {
 
 const { OPENROUTER_KEY, DATABASE_URL } = process.env;
 
-assert(typeof DATABASE_URL === 'string', 'DB env vars must be set');
+assert(typeof DATABASE_URL === 'string', 'DATABASE_URL must be set');
 assert(typeof OPENROUTER_KEY === 'string', 'OPENROUTER_KEY MUST BE DEFINED');
 
-const config = {
+export const db = Knex({
     client: 'pg',
     connection: DATABASE_URL,
-};
+});
 
 export async function llm({ base64Images }: LlmParams) {
     if (!base64Images) {
@@ -79,8 +79,7 @@ export async function llm({ base64Images }: LlmParams) {
         throw new Error('Invalid content format in OpenRouter response');
     }
 
-    const content = JSON.parse(assistantMessage.content) as Omit<User, 'id'>;
+    const content = JSON.parse(assistantMessage.content) as UserProfile;
 
     return content;
 }
-export const db = Knex(config);
