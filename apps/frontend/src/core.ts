@@ -52,3 +52,4 @@ export async function fetcher<TResponse, TBody = unknown>(
   }
   return response.json();
 }
+
