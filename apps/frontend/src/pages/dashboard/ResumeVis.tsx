@@ -1,112 +1,82 @@
 import { Badge } from '~/components/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/card';
 import { Text } from '~/components/text';
-import { ResumeData, Skill } from '~/types';
 
-const skillCategories = {
-  frontend: [
-    'Typescript',
-    'CSS',
-    'Tailwind',
-    'React',
-    'Next.js',
-    'SSR',
-    'SSG',
-    'Styled Components',
-    'Cypress',
-  ],
-  backend: [
-    'Node.js',
-    'Express',
-    'Go',
-    'SQL',
-    'Postgres',
-    'MySQL',
-    'MongoDB',
-    'REST APIs',
-    'WebSockets',
-    'Jest',
-  ],
-  cloud: [
-    'AWS CDK',
-    'AWS Lambda',
-    'AWS SQS',
-    'AWS RDS',
-    'AWS ECS',
-    'AWS API Gateway',
-    'DynamoDB',
-    'AWS S3',
-    'Digital Ocean',
-    'Vercel',
-    'CI/CD',
-  ],
-  blockchain: [
-    'Solidity',
-    'Hardhat',
-    'Foundry',
-    'Ethers.js',
-    'Wagmi',
-    'Blockchain APIs',
-    'Smart Contract Development',
-    'Hyperlane',
-    'Ethereum',
-    'Treasure Chain',
-    'Solana',
-    'NFT',
-    'Subgraphs',
-    'Mainnet',
-  ],
-  other: ['GitHub', 'DNS', 'Figma', 'Kafka'],
+export type Skill = string;
+
+export type Experience = {
+  company: string;
+  duration_months: number;
+  end_date: string;
+  responsibilities: string[];
+  start_date: string;
+  title: string;
+};
+
+export type ResumeData = {
+  skills: Skill[];
+  experience: Experience[];
+  total_experience_years: number;
+  career_level: string;
+  category: string;
+  summary: string;
 };
 
 interface ResumeVisualizationProps {
   data: ResumeData;
+  isLoading?: boolean;
 }
 
-export default function ResumeVisualization({ data }: ResumeVisualizationProps) {
-  const categorizeSkills = (skills: Skill[]) => {
-    const categorized: Record<string, Skill[]> = {
-      frontend: [],
-      backend: [],
-      cloud: [],
-      blockchain: [],
-      other: [],
-    };
+export default function ResumeVisualization({ data, isLoading = false }: ResumeVisualizationProps) {
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading resume data...</div>;
+  }
 
-    skills.forEach((skill) => {
-      let found = false;
-      for (const [category, categorySkills] of Object.entries(skillCategories)) {
-        if (categorySkills.includes(skill)) {
-          categorized[category].push(skill);
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        categorized.other.push(skill);
-      }
-    });
-
-    return categorized;
+  const getSkillColor = (index: number) => {
+    const colors = [
+      { bg: 'bg-purple-700', text: 'text-white' },
+      { bg: 'bg-blue-600', text: 'text-white' },
+      { bg: 'bg-emerald-600', text: 'text-white' },
+      { bg: 'bg-amber-500', text: 'text-black' },
+      { bg: 'bg-red-600', text: 'text-white' },
+      { bg: 'bg-indigo-600', text: 'text-white' },
+      { bg: 'bg-pink-600', text: 'text-white' },
+      { bg: 'bg-teal-600', text: 'text-white' },
+      { bg: 'bg-orange-500', text: 'text-black' },
+      { bg: 'bg-cyan-600', text: 'text-white' },
+    ];
+    return colors[index % colors.length];
   };
 
-  const categorizedSkills = categorizeSkills(data.skills);
+  const getSkillSize = (index: number) => {
+    const position = index / data.skills.length;
+
+    if (position < 0.2) return 'text-base font-semibold sm:text-lg'; // Top 20% skills
+    if (position < 0.5) return 'text-sm font-medium sm:text-base'; // Next 30% skills
+    return 'text-xs sm:text-sm'; // Remaining 50% skills
+  };
 
   return (
-    <div className="w-full px-2 sm:px-0">
+    <div className="w-full">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-3">Resume Analysis</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3">Resume Analysis</h1>
         <div className="flex flex-wrap gap-2 mb-4">
-          <Badge color="blue">
-            {data.career_level.charAt(0).toUpperCase() + data.career_level.slice(1)} Level
-          </Badge>
-          <Badge color="purple">{data.total_experience_years.toFixed(1)} Years Experience</Badge>
           <Badge color="emerald">
             {data.category
               .replace('/', ' / ')
               .split(' ')
               .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
               .join(' ')}
+          </Badge>
+
+          <Badge color="blue">
+            {data.career_level.charAt(0).toUpperCase() + data.career_level.slice(1)}
+          </Badge>
+          <Badge color="purple">
+            {+data.total_experience_years.toFixed(0) < 2
+              ? `${data.total_experience_years.toFixed(0)} Year`
+              : `${data.total_experience_years.toFixed(0)} Years`}{' '}
+            Experience
           </Badge>
         </div>
       </div>
@@ -121,72 +91,32 @@ export default function ResumeVisualization({ data }: ResumeVisualizationProps) 
         </CardContent>
       </Card>
 
-      {/* Career Metrics - Moved up for better mobile experience */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Career Metrics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-purple-600 mb-1">
-                {data.total_experience_years.toFixed(1)}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Years of Experience</div>
-            </div>
-
-            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-purple-600 mb-1">
-                {data.skills.length}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Technical Skills</div>
-            </div>
-
-            <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-purple-600 mb-1">
-                {data.experience.length}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">Companies</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Skills Section */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Skills & Technologies</CardTitle>
+          <CardTitle>Skills & Expertise</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {Object.entries(categorizedSkills).map(
-              ([category, skills]) =>
-                skills.length > 0 && (
-                  <div key={category} className="space-y-2">
-                    <h3 className="text-lg font-semibold capitalize">{category}</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {skills.map((skill) => (
-                        <Badge
-                          key={skill}
-                          color={
-                            category === 'frontend'
-                              ? 'sky'
-                              : category === 'backend'
-                                ? 'emerald'
-                                : category === 'cloud'
-                                  ? 'amber'
-                                  : category === 'blockchain'
-                                    ? 'purple'
-                                    : 'zinc'
-                          }
-                        >
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
+          <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+              {data.skills.map((skill, index) => {
+                const { bg, text } = getSkillColor(index);
+                return (
+                  <div
+                    key={skill}
+                    className={`
+                      ${getSkillSize(index)}
+                      ${bg} ${text}
+                      px-3 py-2 rounded-lg
+                      shadow-sm flex items-center justify-center
+                      cursor-default
+                    `}
+                  >
+                    {skill}
                   </div>
-                )
-            )}
+                );
+              })}
+            </div>
           </div>
         </CardContent>
       </Card>
