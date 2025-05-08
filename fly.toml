@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for backend-lingering-cherry-1470 on 2025-05-06T18:14:39-05:00
+# fly.toml app configuration file generated for backend-bold-glade-2217 on 2025-05-07T18:38:45-05:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'backend-lingering-cherry-1470'
-primary_region = 'atl'
+app = 'backend-bold-glade-2217'
+primary_region = 'iad'
 
 [build]
 
