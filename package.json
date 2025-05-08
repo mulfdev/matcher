@@ -1,7 +1,7 @@
 {
   "name": "matcher-monorepo",
   "private": true,
-  "scripts":{
+  "scripts": {
     "frontend:dev": "pnpm --filter frontend dev || true",
     "api:dev": "pnpm --filter backend dev || true",
     "build:all": "pnpm -r build"
