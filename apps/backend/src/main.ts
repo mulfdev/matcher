@@ -275,7 +275,12 @@ app.get('/start-sse', (req, res) => {
 
 const start = async () => {
     try {
-        await app.listen({ host: '0.0.0.0', port: 3000 });
+        const address = await app.listen({
+            host: '0.0.0.0',
+            port: 3000,
+            listenTextResolver: (address) => `Server listening at ${address}`,
+        });
+        app.log.info(`Server is ready at ${address}`);
     } catch (err) {
         app.log.error(err);
         process.exit(1);

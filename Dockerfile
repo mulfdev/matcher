@@ -28,7 +28,6 @@ RUN pnpm install --frozen-lockfile
 
 # Build application
 WORKDIR /app/apps/backend
-RUN pnpm run build
 
 # Remove development dependencies
 RUN cd /app && pnpm prune --prod
