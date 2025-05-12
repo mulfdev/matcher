@@ -19,13 +19,15 @@ export default function Dashboard() {
     formData.append('file', files[0]);
 
     try {
-      const res = await fetcher({
+      const res: {
+        data: ResumeData;
+      } = await fetcher({
         url: '/upload',
         method: 'POST',
         body: formData,
       });
       setProcessed(true);
-      setData(res.data as ResumeData);
+      setData(res.data);
     } catch (error) {
       if (error instanceof Error) {
         console.log('Upload error: ' + error.message);
