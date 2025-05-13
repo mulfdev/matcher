@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router';
 
 export default function Home() {
+  console.log(`API URL: ${import.meta.env.VITE_API_URL}`);
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       {/* Navbar */}
@@ -39,7 +40,6 @@ export default function Home() {
             Get Started
           </NavLink>
         </div>
-        API URL: {import.meta.env.VITE_API_URL}
       </main>
 
       {/* Footer */}
