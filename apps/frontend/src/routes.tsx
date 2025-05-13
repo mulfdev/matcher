@@ -10,7 +10,7 @@ const Profile = lazy(() => import('~/pages/dashboard/Profile'));
 
 function withSuspense(Component: React.ComponentType) {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-gray-950 text-white flex flex-col"></div>}>
       <Component />
     </Suspense>
   );
