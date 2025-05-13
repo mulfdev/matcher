@@ -6,6 +6,7 @@ const Login = lazy(() => import('~/pages/login/Login'));
 const Home = lazy(() => import('~/pages/home/Home'));
 const Dashboard = lazy(() => import('~/pages/dashboard/Dashboard'));
 const DashboardMatches = lazy(() => import('~/pages/dashboard/Matches'));
+const Profile = lazy(() => import('~/pages/dashboard/Profile'));
 
 function withSuspense(Component: React.ComponentType) {
   return (
@@ -19,11 +20,12 @@ export const router = createBrowserRouter([
   { path: '/', element: withSuspense(Home) },
   { path: 'login', element: withSuspense(Login) },
   {
-    path: "/dashboard",
+    path: '/dashboard',
     Component: DashboardLayout,
     children: [
       { index: true, Component: Dashboard },
-      { path: "matches", Component: DashboardMatches },
+      { path: 'matches', Component: DashboardMatches },
+      { path: 'profile', Component: Profile },
     ],
-  }
+  },
 ]);
