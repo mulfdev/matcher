@@ -4,6 +4,7 @@ import got from 'got';
 import { systemPrompt } from './prompts.js';
 import { resumeSchema } from './schema.js';
 import type { UserProfile } from '../types.js';
+import OpenAI from 'openai';
 
 export type MessageContent =
     | { type: 'text'; text: string }
@@ -28,6 +29,26 @@ export const db = Knex({
     client: 'pg',
     connection: DATABASE_URL,
 });
+
+export const embedder = new OpenAI();
+
+export function weightedVectorCombine(a: number[], b: number[], wA: number, wB: number): number[] {
+    //@ts-expect-error weighed combine
+    const out = a.map((val, i) => val * wA + b[i] * wB);
+    const norm = Math.sqrt(out.reduce((sum, x) => sum + x * x, 0));
+    return out.map((x) => x / norm);
+}
+
+export function ensureNumericVector(v: unknown): number[] {
+    if (Array.isArray(v)) return v.map(Number);
+    if (typeof v === 'string') {
+        if (v.startsWith('[') && v.endsWith(']')) {
+            const parts = v.slice(1, -1).split(',');
+            return parts.map((s) => Number(s.trim()));
+        }
+    }
+    throw new Error('Invalid vector format');
+}
 
 export async function llm({ base64Images }: LlmParams) {
     if (!base64Images) {
