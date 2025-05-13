@@ -6,14 +6,21 @@ import fastifySession from '@fastify/session';
 import fastifyMultipart from '@fastify/multipart';
 import cookie from '@fastify/cookie';
 import { OAuth2Client } from 'google-auth-library';
-import type { AuthBody } from '../types.js';
+import type { AuthBody, SimilarityResult } from '../types.js';
 import { createId } from '@paralleldrive/cuid2';
 import { join } from 'path';
 import { mkdirSync, existsSync, createWriteStream } from 'fs';
 import { pipeline } from 'stream/promises';
 import { readdir, readFile, rm } from 'fs/promises';
 import { Poppler } from 'node-poppler';
-import { db, llm, type MessageContent } from './core.js';
+import {
+    db,
+    embedder,
+    ensureNumericVector,
+    llm,
+    weightedVectorCombine,
+    type MessageContent,
+} from './core.js';
 
 const { GOOGLE_CLIENT_ID, COOKIE_SECRET } = process.env;
 
@@ -24,7 +31,7 @@ const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 const poppler = new Poppler();
 
 const app = Fastify({
-    logger: true,
+    logger: false,
 });
 
 // PLUGINS
@@ -34,7 +41,7 @@ app.register(cookie);
 app.register(fastifySession, {
     secret: COOKIE_SECRET,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: true,
         httpOnly: true,
         sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // In milliseconds
@@ -204,6 +211,27 @@ app.post(
             const { skills, experience, total_experience_years, career_level, category, summary } =
                 await llm({ base64Images });
 
+            const skillsText = skills.join(', ');
+            const skillsEmbedding = await embedder.embeddings.create({
+                model: 'text-embedding-3-small',
+                input: skillsText,
+                encoding_format: 'float',
+            });
+
+            const summaryEmbedding = await embedder.embeddings.create({
+                model: 'text-embedding-3-small',
+                input: summary,
+                encoding_format: 'float',
+            });
+
+            if (!skillsEmbedding?.data?.[0]?.embedding) {
+                throw new Error('Could not generate embeddings for skills');
+            }
+
+            if (!summaryEmbedding?.data?.[0]?.embedding) {
+                throw new Error('Could not generate embeddings for skills');
+            }
+
             await db('user_profile')
                 .insert({
                     skills,
@@ -213,6 +241,12 @@ app.post(
                     category,
                     summary,
                     user_id: req.session.userId,
+                    summary_embedding: db.raw('?::vector(1536)', [
+                        `[${summaryEmbedding.data[0].embedding.join(',')}]`,
+                    ]),
+                    skill_embedding: db.raw('?::vector(1536)', [
+                        `[${skillsEmbedding.data[0].embedding.join(',')}]`,
+                    ]),
                 })
                 .onConflict('user_id')
                 .merge();
@@ -236,6 +270,45 @@ app.post(
         }
     }
 );
+
+app.get('/match-job', async (req, res) => {
+    if (!req.session.userId) {
+        return res.status(400).send({ error: 'must be signed in' });
+    }
+
+    const [userEmbeddings] = await db('user_profile')
+        .select('skill_embedding', 'summary_embedding')
+        .where('user_id', req.session.userId);
+
+    if (!userEmbeddings) {
+        throw new Error('User has not been onboarded yet');
+    }
+
+    const combined = weightedVectorCombine(
+        ensureNumericVector(userEmbeddings.skill_embedding),
+        ensureNumericVector(userEmbeddings.summary_embedding),
+        0.25,
+        0.75
+    );
+
+    const results = await db<SimilarityResult>('job_postings_details')
+        .select(
+            'id',
+            'title',
+            'location',
+            'compensation',
+            'summary',
+            db.raw('(skill_embedding <-> ?::vector(1536)) AS similarity', [
+                `[${combined.join(',')}]`,
+            ])
+        )
+        .orderBy('similarity', 'asc')
+        .limit(7);
+
+    return {
+        results,
+    };
+});
 
 app.get('/auth/me', async (req, res) => {
     if (!req.session.userId) {
