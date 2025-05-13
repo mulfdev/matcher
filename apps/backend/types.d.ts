@@ -9,25 +9,23 @@ declare module 'fastify' {
     }
 }
 
-
 type InferSchemaType<T> = T extends { properties: infer P }
     ? {
-        [K in keyof P]: P[K] extends { type: 'string' }
-        ? string
-        : P[K] extends { type: 'number' }
-        ? number
-        : P[K] extends { type: 'boolean' }
-        ? boolean
-        : P[K] extends { type: 'object' }
-        ? InferSchemaType<P[K]>
-        : P[K] extends { type: 'array' }
-        ? unknown[]
-        : unknown;
-    }
+          [K in keyof P]: P[K] extends { type: 'string' }
+              ? string
+              : P[K] extends { type: 'number' }
+                ? number
+                : P[K] extends { type: 'boolean' }
+                  ? boolean
+                  : P[K] extends { type: 'object' }
+                    ? InferSchemaType<P[K]>
+                    : P[K] extends { type: 'array' }
+                      ? unknown[]
+                      : unknown;
+      }
     : never;
 
 export type AuthBody = InferSchemaType<typeof authSchema>;
-
 
 export interface JobPostingsDetails {
     id: string;
@@ -42,7 +40,6 @@ export interface JobPostingsDetails {
     summary?: string;
     job_postings_scraping_id?: string;
     last_modified: string;
-    embeddings?: number[];
 }
 
 export interface Experience {
@@ -56,7 +53,7 @@ export interface Experience {
 
 export interface User {
     id: string;
-    oauth_user_id: string
+    oauth_user_id: string;
     oauth_provider: string;
     email: string;
     name: string;
@@ -70,7 +67,11 @@ export interface UserProfile {
     skills: string[];
     category: string;
     summary: string;
+    skill_embedding: number[];
+    summary_embedding: number[];
 }
+
+export type SimilarityResult = JobPostingsDetails & { similarity: number };
 
 declare module 'knex/types/tables.js' {
     interface Tables {
