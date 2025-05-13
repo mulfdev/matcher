@@ -34,13 +34,13 @@ export default function Login() {
                       credential: credentialResponse.credential,
                     },
                   });
-                  console.log(credentialResponse);
                   navigate('/dashboard');
                 }}
                 onError={() => {
                   console.log('Login Failed');
                 }}
-              />
+                useOneTap={false}
+              />{' '}
             </div>
           </div>
         </div>
