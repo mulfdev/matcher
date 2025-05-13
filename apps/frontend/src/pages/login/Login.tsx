@@ -24,32 +24,24 @@ export default function Login() {
           </div>
 
           <div className="mt-8 space-y-6">
-            <GoogleLogin
-              onSuccess={async (credentialResponse) => {
-                await fetcher<GoogleAuthRes>({
-                  method: 'POST',
-                  url: `/auth/google`,
-                  body: {
-                    credential: credentialResponse.credential,
-                  },
-                });
-                console.log(credentialResponse);
-                navigate('/dashboard');
-              }}
-              onError={() => {
-                console.log('Login Failed');
-              }}
-              useOneTap
-            />
-
-            <button
-              onClick={async () => {
-                const res = await fetcher({ url: '/auth/me' });
-                console.log(res);
-              }}
-            >
-              Test auth
-            </button>
+            <div className="flex w-full justify-center">
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  await fetcher<GoogleAuthRes>({
+                    method: 'POST',
+                    url: `/auth/google`,
+                    body: {
+                      credential: credentialResponse.credential,
+                    },
+                  });
+                  console.log(credentialResponse);
+                  navigate('/dashboard');
+                }}
+                onError={() => {
+                  console.log('Login Failed');
+                }}
+              />
+            </div>
           </div>
         </div>
       </main>
