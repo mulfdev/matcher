@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { fetcher } from '~/core';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '~/components/card';
-import { Badge } from '~/components/badge';
 import { Text } from '~/components/text';
 import { Button } from '~/components/button';
 
