@@ -68,7 +68,7 @@ export default function DashboardLayout() {
                 />
               </DropdownButton>
               <DropdownMenu className="min-w-64" anchor="bottom end">
-                <DropdownItem href="/my-profile">
+                <DropdownItem href="/dashboard/profile">
                   <UserIcon />
                   <DropdownLabel>My profile</DropdownLabel>
                 </DropdownItem>
