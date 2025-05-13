@@ -5,4 +5,4 @@ docker run -it --rm postgres psql \
   -p 20431 \
   -U mulf0 \
   -d jobs_rag \
-  -c "DROP TABLE \"user\" "
+  -c "DROP TABLE user_profile; DROP TABLE \"user\" "

@@ -30,5 +30,7 @@ docker run -it --rm postgres psql \
     experience              JSONB       NOT NULL,
     skills                  TEXT[]      NOT NULL,
     category                TEXT        NOT NULL,
-    summary                 TEXT        NOT NULL
+    summary                 TEXT        NOT NULL,
+    summary_embedding vector(1536),
+    skill_embedding vector(1536)
   );"
