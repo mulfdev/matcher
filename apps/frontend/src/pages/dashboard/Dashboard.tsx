@@ -1,6 +1,10 @@
 import { useState, useCallback } from 'react';
 import Dropzone from 'react-dropzone';
-import { ArrowUpTrayIcon, DocumentIcon, XMarkIcon } from '@heroicons/react/24/outline';
+
+import ArrowUpTrayIcon from '@heroicons/react/24/outline/ArrowUpTrayIcon';
+import DocumentIcon from '@heroicons/react/24/outline/DocumentIcon';
+import XMarkIcon from '@heroicons/react/24/outline/XMarkIcon';
+
 import { fetcher } from '~/core';
 import ResumeViz from './ResumeVis';
 import { ResumeData } from '~/types';
