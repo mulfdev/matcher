@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useNavigate } from "react-router"
-import { Avatar } from '~/components/avatar'
+import { NavLink, Outlet, useNavigate } from 'react-router';
+import { Avatar } from '~/components/avatar';
 import {
   Dropdown,
   DropdownButton,
@@ -7,40 +7,43 @@ import {
   DropdownItem,
   DropdownLabel,
   DropdownMenu,
-} from '~/components/dropdown'
-import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '~/components/navbar'
-import { Sidebar, SidebarBody, SidebarHeader, SidebarItem, SidebarSection } from '~/components/sidebar'
-import { StackedLayout } from '~/components/stacked-layout'
+} from '~/components/dropdown';
+import { Navbar, NavbarItem, NavbarSection, NavbarSpacer } from '~/components/navbar';
 import {
-  ArrowRightStartOnRectangleIcon,
-  Cog8ToothIcon,
-  LightBulbIcon,
-  ShieldCheckIcon,
-  UserIcon,
-} from '@heroicons/react/16/solid'
-import { fetcher } from "~/core"
-import { useEffect } from "react"
+  Sidebar,
+  SidebarBody,
+  SidebarHeader,
+  SidebarItem,
+  SidebarSection,
+} from '~/components/sidebar';
+import { StackedLayout } from '~/components/stacked-layout';
+
+import ArrowRightStartOnRectangleIcon from '@heroicons/react/16/solid/ArrowRightStartOnRectangleIcon';
+import Cog8ToothIcon from '@heroicons/react/16/solid/Cog8ToothIcon';
+import LightBulbIcon from '@heroicons/react/16/solid/LightBulbIcon';
+import ShieldCheckIcon from '@heroicons/react/16/solid/ShieldCheckIcon';
+import UserIcon from '@heroicons/react/16/solid/UserIcon';
+
+import { fetcher } from '~/core';
+import { useEffect } from 'react';
 
 const navItems = [
   { label: 'Home', url: '/dashboard' },
   { label: 'Matches', url: '/dashboard/matches' },
-]
-
-
+];
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
   useEffect(() => {
     async function checkAuth() {
       try {
-        await fetcher({ url: "/auth/me" })
+        await fetcher({ url: '/auth/me' });
       } catch {
-        navigate("/login")
+        navigate('/login');
       }
     }
-    checkAuth()
-  }, [navigate])
-
+    checkAuth();
+  }, [navigate]);
 
   return (
     <StackedLayout
@@ -59,7 +62,10 @@ export default function DashboardLayout() {
           <NavbarSection>
             <Dropdown>
               <DropdownButton as={NavbarItem}>
-                <Avatar src="https://placehold.jp/60/2a3079/ffffff/150x150.png?text=PFP%0A" square />
+                <Avatar
+                  src="https://placehold.jp/60/2a3079/ffffff/150x150.png?text=PFP%0A"
+                  square
+                />
               </DropdownButton>
               <DropdownMenu className="min-w-64" anchor="bottom end">
                 <DropdownItem href="/my-profile">
@@ -82,13 +88,17 @@ export default function DashboardLayout() {
                 <DropdownDivider />
                 <DropdownItem>
                   <ArrowRightStartOnRectangleIcon />
-                  <DropdownLabel onClick={async () => {
-                    console.log("clicked")
-                    await fetcher({ url: "/logout" })
-                    console.log("made request")
-                    navigate("/login", { replace: true });
-                    console.log("shouldnt have got here")
-                  }}>Sign out</DropdownLabel>
+                  <DropdownLabel
+                    onClick={async () => {
+                      console.log('clicked');
+                      await fetcher({ url: '/logout' });
+                      console.log('made request');
+                      navigate('/login', { replace: true });
+                      console.log('shouldnt have got here');
+                    }}
+                  >
+                    Sign out
+                  </DropdownLabel>
                 </DropdownItem>
               </DropdownMenu>
             </Dropdown>
@@ -97,9 +107,7 @@ export default function DashboardLayout() {
       }
       sidebar={
         <Sidebar>
-          <SidebarHeader>
-
-          </SidebarHeader>
+          <SidebarHeader></SidebarHeader>
           <SidebarBody>
             <SidebarSection>
               {navItems.map(({ label, url }) => (
@@ -114,5 +122,5 @@ export default function DashboardLayout() {
     >
       <Outlet />
     </StackedLayout>
-  )
+  );
 }
