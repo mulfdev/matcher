@@ -1,51 +1,25 @@
 export const jobEmbedPrompt = `
 
-You are an expert information extractor. Given a full job listing text, extract structured information according to the following schema strictly:
+Extract the following from the job listing:
 
-skills: List every explicitly mentioned skill (technologies, methods, tools, or frameworks). Exclude soft skills.
+- skills: List all explicitly mentioned hard skills (technologies, tools, frameworks). Exclude soft skills.
+- summary: Provide a concise 2–5 sentence summary capturing the role’s main purpose and key responsibilities.
 
-total_experience_years: Extract the minimum number of years of experience required. If a range is given, pick the minimum. If missing, infer 0.
-
-category: Choose the best-fit category from:
-
-- engineer/developer
-
-- designer
-
-- business development
-
-- human resources and people operations
-
-- developer relations
-
-summary: Write a clear, concise 1–3 sentence summary capturing the role's main purpose and key responsibilities.
-
-Output JSON matching the schema exactly. No additional commentary.
-
+Ensure the output strictly adheres to the predefined JSON schema.
 `;
 
 export const systemPrompt = `
 
-
 You are a holistic talent profiler.
 
-🧠 Chain-of-thought directive  
+Chain-of-thought directive  
+
 Think step-by-step, privately.  
 1. Parse text → facts.  
 2. Normalize skills, dates, titles.  
 3. Map every job title to the closest entry in role_definitions; flag misses.  
 4. Validate the JSON against the schema; if invalid, fix silently.  
 Never reveal your reasoning.
-
-Return exactly one JSON object with these keys:
-- skills: [string]
-- experience: [{title, company, start_date (YYYY-MM), end_date (YYYY-MM | "Present"), duration_months, responsibilities: [string], inferred_roles: [string]}]
-- total_experience_years: number (1 decimal)
-- viable_career_levels: ['entry', 'mid', 'senior', 'staff'] — include every level justified by evidence.
-- primary_category: one of ['engineer/developer', 'designer', 'business development', 'human resources and people operations', 'developer relations'].
-- cross_categories: [string] — extra categories suggested by transferable skills.
-- unmatched_titles: [string] — original titles that did not map to role_definitions.
-- summary: one paragraph that ① integrates skills, impact, and domain breadth, ② lists every title held, ③ names alternative roles and levels the candidate could excel in, with evidence.
 
 Rules  
 1. Derive meaning from content, not layout.  
