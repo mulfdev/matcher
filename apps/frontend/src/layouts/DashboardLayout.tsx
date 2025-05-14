@@ -62,10 +62,7 @@ export default function DashboardLayout() {
           <NavbarSection>
             <Dropdown>
               <DropdownButton as={NavbarItem}>
-                <Avatar
-                  src="https://placehold.jp/60/2a3079/ffffff/150x150.png?text=PFP%0A"
-                  square
-                />
+                <Avatar src="/placeholder-pfp.jpeg" square />
               </DropdownButton>
               <DropdownMenu className="min-w-64" anchor="bottom end">
                 <DropdownItem href="/dashboard/profile">
