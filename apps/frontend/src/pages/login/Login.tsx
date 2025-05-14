@@ -1,11 +1,7 @@
-import { GoogleLogin } from '@react-oauth/google';
-import { NavLink, useNavigate } from 'react-router';
-import { fetcher } from '~/core';
-import { GoogleAuthRes } from '~/types';
+import { NavLink } from 'react-router';
+import { apiUrl } from '~/core';
 
 export default function Login() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
       <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
@@ -19,28 +15,20 @@ export default function Login() {
       <main className="container mx-auto px-6 flex flex-col items-center justify-center text-center flex-grow">
         <div className="w-full max-w-md p-8 space-y-8 bg-gray-900 rounded-xl shadow-lg">
           <div>
-            <h2 className="text-3xl font-bold text-white">Welcome</h2>
-            <p className="mt-2 text-gray-300">Sign in to continue to Matcher</p>
+            <h2 className="text-3xl font-bold text-white">Welcome To Matcher!</h2>
           </div>
 
           <div className="mt-8 space-y-6">
+            <h3>Sign in With</h3>
             <div className="flex w-full justify-center">
-              <GoogleLogin
-                onSuccess={async (credentialResponse) => {
-                  await fetcher<GoogleAuthRes>({
-                    method: 'POST',
-                    url: `/auth/google`,
-                    body: {
-                      credential: credentialResponse.credential,
-                    },
-                  });
-                  navigate('/dashboard');
+              <button
+                onClick={() => {
+                  window.location.href = `${apiUrl}/auth/google`;
                 }}
-                onError={() => {
-                  console.log('Login Failed');
-                }}
-                useOneTap={false}
-              />{' '}
+                className="bg-blue-600 text-white px-4 py-2 rounded w-48"
+              >
+                Google
+              </button>
             </div>
           </div>
         </div>
