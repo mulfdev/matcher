@@ -6,7 +6,7 @@ import fastifySession from '@fastify/session';
 import fastifyMultipart from '@fastify/multipart';
 import cookie from '@fastify/cookie';
 import { OAuth2Client } from 'google-auth-library';
-import type { AuthBody, SimilarityResult } from '../types.js';
+import type { SimilarityResult } from '../types.js';
 import { createId } from '@paralleldrive/cuid2';
 import { join } from 'path';
 import { mkdirSync, existsSync, createWriteStream } from 'fs';
@@ -21,11 +21,23 @@ import {
     weightedVectorCombine,
     type MessageContent,
 } from './core.js';
+import { ConnectSessionKnexStore } from 'connect-session-knex';
+import got from 'got';
 
-const { GOOGLE_CLIENT_ID, COOKIE_SECRET } = process.env;
+import type { FastifyRequest } from 'fastify';
+
+interface GoogleCallbackQuery {
+    code: string;
+}
+
+const { GOOGLE_CLIENT_ID, COOKIE_SECRET, BASE_URL, FRONTEND_URL, GOOGLE_CLIENT_SECRET } =
+    process.env;
 
 assert(typeof GOOGLE_CLIENT_ID === 'string', 'GOOGLE_CLIENT_ID must be defined');
 assert(typeof COOKIE_SECRET === 'string', 'COOKIE_SECRET must be set');
+assert(typeof BASE_URL === 'string', 'BASE_URL must be set');
+assert(typeof FRONTEND_URL === 'string', 'FRONTEND_URL must be set');
+assert(typeof GOOGLE_CLIENT_SECRET === 'string', 'GOOGLE_CLIENT_SECRET must be set');
 
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 const poppler = new Poppler();
@@ -34,12 +46,20 @@ const app = Fastify({
     logger: false,
 });
 
+//
 // PLUGINS
+//
+
+const store = new ConnectSessionKnexStore({
+    knex: db,
+    tableName: 'sessions',
+});
 
 app.register(cookie);
 
 app.register(fastifySession, {
     secret: COOKIE_SECRET,
+    store,
     cookie: {
         secure: true,
         httpOnly: true,
@@ -60,50 +80,64 @@ app.register(fastifyMultipart, {
     },
 });
 
+//
 // ROUTES
+//
 
 app.get('/', () => {
     return { hello: 'world' };
 });
 
-app.post<{ Body: AuthBody }>(
-    '/auth/google',
-    {
-        schema: {
-            body: {
-                type: 'object',
-                required: ['credential'],
-                properties: {
-                    credential: { type: 'string' },
-                },
-            },
-        },
-    },
-    async (req, res) => {
+app.get('/auth/google', async (_, res) => {
+    const redirectUri = `${BASE_URL}/auth/google/callback`;
+
+    const scope = ['openid', 'email', 'profile'].join(' ');
+
+    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    url.searchParams.set('client_id', GOOGLE_CLIENT_ID);
+    url.searchParams.set('redirect_uri', redirectUri);
+    url.searchParams.set('response_type', 'code');
+    url.searchParams.set('scope', scope);
+    url.searchParams.set('access_type', 'offline');
+    url.searchParams.set('prompt', 'consent');
+
+    res.redirect(url.toString());
+});
+
+app.get(
+    '/auth/google/callback',
+    async (req: FastifyRequest<{ Querystring: GoogleCallbackQuery }>, res) => {
         try {
+            const { code } = req.query;
+            const redirectUri = `${BASE_URL}/auth/google/callback`;
+
+            const tokenRes = await got.post('https://oauth2.googleapis.com/token', {
+                form: {
+                    code,
+                    client_id: GOOGLE_CLIENT_ID,
+                    client_secret: GOOGLE_CLIENT_SECRET,
+                    redirect_uri: redirectUri,
+                    grant_type: 'authorization_code',
+                },
+                responseType: 'json',
+            });
+
+            const body = tokenRes.body as { id_token: string };
+            const idToken = body.id_token;
+
             const ticket = await client.verifyIdToken({
-                idToken: req.body.credential,
-                audience: GOOGLE_CLIENT_ID,
+                idToken,
+                audience: process.env.GOOGLE_CLIENT_ID,
             });
             const payload = ticket.getPayload();
 
-            if (!payload) {
-                return await res.status(401).send({ error: 'Bad req' });
+            if (!payload || typeof payload.email !== 'string' || typeof payload.name !== 'string') {
+                return await res.status(400).send('Invalid user data');
             }
 
-            if (typeof payload.email !== 'string') {
-                return await res.status(400).send({ error: 'Could not get email' });
-            }
-
-            if (typeof payload.name !== 'string') {
-                return await res.status(400).send({ error: 'Could not get name' });
-            }
-
-            let user = await db('user').where('oauth_user_id', payload.sub).select('id').first();
-
+            let user = await db('user').where('oauth_user_id', payload.sub).first();
             if (!user) {
-                console.log('created user');
-                const insertedUsers = await db('user').insert(
+                const [insertedUser] = await db('user').insert(
                     {
                         id: createId(),
                         oauth_user_id: payload.sub,
@@ -114,7 +148,15 @@ app.post<{ Body: AuthBody }>(
                     ['id']
                 );
 
-                user = insertedUsers[0];
+                if (insertedUser) {
+                    user = {
+                        id: insertedUser.id,
+                        oauth_user_id: payload.sub,
+                        oauth_provider: 'google',
+                        email: payload.email,
+                        name: payload.name,
+                    };
+                }
             }
 
             if (user === undefined) {
@@ -122,19 +164,14 @@ app.post<{ Body: AuthBody }>(
             }
 
             req.session.userId = user.id;
-            req.session.email = payload.email;
-            req.session.name = payload.name;
-
+            req.session.email = user.email;
+            req.session.name = user.name;
             await req.session.save();
 
-            return {
-                email: payload.email,
-                name: payload.name,
-                userId: payload.sub,
-            };
-        } catch (error) {
-            console.log(error);
-            res.status(401).send({ error: 'Invalid token' });
+            res.redirect(`${FRONTEND_URL}/dashboard`);
+        } catch (e) {
+            console.log(e);
+            res.status(500).send('OAuth callback error');
         }
     }
 );
@@ -348,12 +385,12 @@ app.get('/start-sse', (req, res) => {
 
 const start = async () => {
     try {
-        const address = await app.listen({
+        await app.listen({
             host: '0.0.0.0',
             port: 3000,
-            listenTextResolver: (address) => `Server listening at ${address}`,
         });
-        app.log.info(`Server is ready at ${address}`);
+
+        console.log('Server running!');
     } catch (err) {
         app.log.error(err);
         process.exit(1);
