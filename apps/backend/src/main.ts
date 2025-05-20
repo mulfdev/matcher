@@ -69,7 +69,7 @@ app.register(fastifySession, {
     saveUninitialized: false,
 });
 app.register(cors, {
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
+    origin: ['https://matcher.pages.dev', 'http://localhost:5173'],
     credentials: true,
 });
 

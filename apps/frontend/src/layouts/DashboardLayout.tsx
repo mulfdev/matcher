@@ -37,8 +37,15 @@ export default function DashboardLayout() {
   useEffect(() => {
     async function checkAuth() {
       try {
+        // FOR TESTING ONLY: Introduce a small delay
+        await new Promise((resolve) => setTimeout(resolve, 500)); // 0.5 second delay
+
+        console.log('Attempting /auth/me from DashboardLayout');
         await fetcher({ url: '/auth/me' });
-      } catch {
+        console.log('/auth/me successful from DashboardLayout');
+        // ... your success logic (e.g., set authenticated state)
+      } catch (error) {
+        console.error('/auth/me failed in DashboardLayout:', error);
         navigate('/login');
       }
     }
