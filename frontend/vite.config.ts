@@ -6,7 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   plugins: [tsconfigPaths(), tailwindcss(), react()],
   build: {
-    outDir: '../../dist/client',
+    outDir: '../dist/client',
     rollupOptions: {
       output: {
         manualChunks(id: string) {

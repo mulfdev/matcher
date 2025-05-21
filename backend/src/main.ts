@@ -4,13 +4,14 @@ import cors from '@fastify/cors';
 import fastifySession from '@fastify/session';
 import fastifyMultipart from '@fastify/multipart';
 import cookie from '@fastify/cookie';
-import { join } from 'path';
+import { dirname, join } from 'path';
 import { db } from './core.js';
 import { ConnectSessionKnexStore } from 'connect-session-knex';
 
 import fastifyStatic from '@fastify/static';
 import assert from 'assert';
 import { apiRoutes } from './handlers/apiHandlers.js';
+import { fileURLToPath } from 'url';
 
 const { COOKIE_SECRET, NODE_ENV } = process.env;
 
@@ -60,7 +61,10 @@ app.register(fastifyMultipart, {
 app.register(apiRoutes, { prefix: '/api' });
 
 if (NODE_ENV === 'production') {
-    const clientDistPath = join(__dirname, 'client');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+
+    const clientDistPath = join(__dirname, '..', 'client');
     console.log(`Production mode: Static assets served from: ${clientDistPath}`);
 
     app.register(fastifyStatic, {

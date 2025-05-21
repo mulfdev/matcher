@@ -1,32 +1,28 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
-    "skipLibCheck": true,
     "target": "es2022",
+    "module": "NodeNext",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "allowJs": true,
     "resolveJsonModule": true,
-    "moduleDetection": "force",
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-
+    "skipLibCheck": true,
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-
-    "module": "NodeNext",
-    "outDir": "../../app-dist/server",
+    "outDir": "../dist/server",
+    "rootDir": "src",
     "sourceMap": true,
-
     "lib": ["es2022"]
   },
-   "include": [
-    "**/*.ts",
-    "**/*.mjs",
-    "**/*.d.ts"
+  "include": [
+    "src/**/*",
+    "*.d.ts"
   ],
-   "exclude": [
+  "exclude": [
     "node_modules",
-    "dist",
-    "old-bot-src"
   ]
 }
+
