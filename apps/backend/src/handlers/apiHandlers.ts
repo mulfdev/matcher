@@ -8,15 +8,15 @@ import {
     llm,
     weightedVectorCombine,
     type MessageContent,
-} from '../core';
+} from '../core.js';
 import { OAuth2Client } from 'google-auth-library';
 import { createId } from '@paralleldrive/cuid2';
 import { join } from 'path';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { pipeline } from 'stream/promises';
 import { readdir, readFile, rm } from 'fs/promises';
-import type { SimilarityResult } from '../../types';
-import Poppler from 'node-poppler';
+import type { SimilarityResult } from '../../types.js';
+import { Poppler } from 'node-poppler';
 
 interface GoogleCallbackQuery {
     code: string;
