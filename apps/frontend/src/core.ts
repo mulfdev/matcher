@@ -16,7 +16,7 @@ type PostFetcherOptions<TBody = unknown> = BaseFetcherOptions & {
 
 type FetcherOptions<TBody = unknown> = GetFetcherOptions | PostFetcherOptions<TBody>;
 
-export const apiUrl = import.meta.env.VITE_API_URL;
+export const apiUrl = `${import.meta.env.VITE_API_URL}/api`;
 
 export async function fetcher<TResponse, TBody = unknown>(
   options: FetcherOptions<TBody>
@@ -52,4 +52,3 @@ export async function fetcher<TResponse, TBody = unknown>(
   }
   return response.json();
 }
-

@@ -14,13 +14,14 @@
     "noImplicitOverride": true,
 
     "module": "NodeNext",
-    "outDir": "dist",
+    "outDir": "../../app-dist/server",
     "sourceMap": true,
 
     "lib": ["es2022"]
   },
    "include": [
     "**/*.ts",
+    "**/*.mjs",
     "**/*.d.ts"
   ],
    "exclude": [

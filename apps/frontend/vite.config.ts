@@ -6,6 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 export default defineConfig({
   plugins: [tsconfigPaths(), tailwindcss(), react()],
   build: {
+    outDir: '../../dist/client',
     rollupOptions: {
       output: {
         manualChunks(id: string) {
@@ -36,8 +37,8 @@ export default defineConfig({
             }
             return 'vendor';
           }
-        }
-      }
-    }
-  }
+        },
+      },
+    },
+  },
 });
