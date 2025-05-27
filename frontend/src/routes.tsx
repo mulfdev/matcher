@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router';
 import { lazy, Suspense } from 'react';
 import DashboardLayout from '~/layouts/DashboardLayout';
+import { authLoader } from '~/loaders';
 
 const Login = lazy(() => import('~/pages/login/Login'));
 const Home = lazy(() => import('~/pages/home/Home'));
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
   {
     path: '/dashboard',
     Component: DashboardLayout,
+    loader: authLoader,
     children: [
       { index: true, Component: Dashboard },
       { path: 'matches', Component: DashboardMatches },

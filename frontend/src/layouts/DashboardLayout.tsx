@@ -25,7 +25,6 @@ import ShieldCheckIcon from '@heroicons/react/16/solid/ShieldCheckIcon';
 import UserIcon from '@heroicons/react/16/solid/UserIcon';
 
 import { fetcher } from '~/core';
-import { useEffect } from 'react';
 
 const navItems = [
   { label: 'Home', url: '/dashboard' },
@@ -34,24 +33,6 @@ const navItems = [
 
 export default function DashboardLayout() {
   const navigate = useNavigate();
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        // FOR TESTING ONLY: Introduce a small delay
-        await new Promise((resolve) => setTimeout(resolve, 500)); // 0.5 second delay
-
-        console.log('Attempting /auth/me from DashboardLayout');
-        await fetcher({ url: '/auth/me' });
-        console.log('/auth/me successful from DashboardLayout');
-        // ... your success logic (e.g., set authenticated state)
-      } catch (error) {
-        console.error('/auth/me failed in DashboardLayout:', error);
-        navigate('/login');
-      }
-    }
-    checkAuth();
-  }, [navigate]);
-
   return (
     <StackedLayout
       navbar={
