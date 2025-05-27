@@ -7,6 +7,7 @@ const Login = lazy(() => import('~/pages/login/Login'));
 const Home = lazy(() => import('~/pages/home/Home'));
 const Dashboard = lazy(() => import('~/pages/dashboard/Dashboard'));
 const DashboardMatches = lazy(() => import('~/pages/dashboard/Matches'));
+const DashboardLikedJobs = lazy(() => import('~/pages/dashboard/LikedJobs'));
 const Profile = lazy(() => import('~/pages/dashboard/Profile'));
 
 function withSuspense(Component: React.ComponentType) {
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { index: true, Component: Dashboard },
       { path: 'matches', Component: DashboardMatches },
       { path: 'profile', Component: Profile },
+      { path: 'liked', Component: DashboardLikedJobs },
     ],
   },
 ]);

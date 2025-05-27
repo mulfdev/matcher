@@ -55,7 +55,7 @@ export async function llm({ base64Images }: LlmParams) {
         throw new Error('Must have resume images with request');
     }
 
-    const model = 'google/gemini-2.5-flash-preview';
+    const model = 'google/gemini-2.5-flash-preview-05-20';
     const messages = [
         { role: 'user', content: systemPrompt },
         { role: 'user', content: base64Images },

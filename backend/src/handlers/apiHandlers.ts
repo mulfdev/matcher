@@ -15,7 +15,8 @@ import { join } from 'path';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { pipeline } from 'stream/promises';
 import { readdir, readFile, rm } from 'fs/promises';
-import type { SimilarityResult } from '../../types.js';
+import type { SimilarityResult, JobFeedbackBody } from '../../types.js';
+import { jobFeedbackSchema } from '../routeSchema.js';
 import { Poppler } from 'node-poppler';
 
 interface GoogleCallbackQuery {
@@ -229,8 +230,8 @@ export function apiRoutes(api: FastifyInstance) {
 
                 await db('user_profile')
                     .insert({
-                        skills,
-                        experience: { ...experience },
+                        skills: db.raw('?::text[]', [skills]),
+                        experience: db.raw('?::jsonb', [JSON.stringify(experience)]),
                         total_experience_years,
                         career_level,
                         category,
@@ -279,14 +280,40 @@ export function apiRoutes(api: FastifyInstance) {
             throw new Error('User has not been onboarded yet');
         }
 
-        const combined = weightedVectorCombine(
+        const baseVec = weightedVectorCombine(
             ensureNumericVector(userEmbeddings.skill_embedding),
             ensureNumericVector(userEmbeddings.summary_embedding),
             0.25,
             0.75
         );
 
-        const results = await db<SimilarityResult>('job_postings_details')
+        const feedbacks = await db('user_job_feedback')
+            .select('job_id', 'liked')
+            .where('user_id', req.session.userId);
+
+        const likedIds = feedbacks.filter((f) => f.liked).map((f) => f.job_id);
+        const vectors = [baseVec];
+        if (likedIds.length > 0) {
+            const likedEmbeddings = await db('job_postings_details')
+                .select('skill_embedding', 'summary_embedding')
+                .whereIn('id', likedIds);
+            for (const row of likedEmbeddings) {
+                vectors.push(
+                    weightedVectorCombine(
+                        ensureNumericVector(row.skill_embedding),
+                        ensureNumericVector(row.summary_embedding),
+                        0.25,
+                        0.75
+                    )
+                );
+            }
+        }
+
+        const refinedVec = vectors[0].map((_, i) =>
+            vectors.reduce((sum, v) => sum + v[i], 0) / vectors.length
+        );
+
+        let query = db<SimilarityResult>('job_postings_details')
             .select(
                 'id',
                 'title',
@@ -294,15 +321,79 @@ export function apiRoutes(api: FastifyInstance) {
                 'compensation',
                 'summary',
                 db.raw('(skill_embedding <-> ?::vector(1536)) AS similarity', [
-                    `[${combined.join(',')}]`,
+                    `[${refinedVec.join(',')}]`,
                 ])
             )
             .orderBy('similarity', 'asc')
             .limit(7);
 
-        return {
-            results,
-        };
+        if (feedbacks.length > 0) {
+            query = query.whereNotIn('id', feedbacks.map((f) => f.job_id));
+        }
+
+        const results = await query;
+        return { results };
+    });
+
+    api.post(
+        '/match-job/feedback',
+        {
+            schema: { body: jobFeedbackSchema },
+            preHandler: (req, res, done) => {
+                if (!req.session.userId) {
+                    res.status(401).send({ error: 'Not authenticated' });
+                    return done(new Error('Not authenticated'));
+                }
+                done();
+            },
+        },
+        async (req: FastifyRequest<{ Body: JobFeedbackBody }>, res) => {
+            const { id, liked } = req.body;
+            const jobId = parseInt(id, 10);
+            await db('user_job_feedback')
+                .insert({ user_id: req.session.userId, job_id: jobId, liked })
+                .onConflict(['user_id', 'job_id'])
+                .merge();
+            return res.send({ status: 'ok' });
+        }
+    );
+
+    api.get('/match-job/liked', async (req, res) => {
+        if (!req.session.userId) {
+            return res.status(401).send({ error: 'Not authenticated' });
+        }
+        const likedJobs = await db('job_postings_details')
+            .select('id', 'title', 'location', 'compensation', 'summary')
+            .join('user_job_feedback', 'job_postings_details.id', 'user_job_feedback.job_id')
+            .where('user_job_feedback.user_id', req.session.userId)
+            .andWhere('user_job_feedback.liked', true);
+
+        return { results: likedJobs };
+    });
+
+    api.get('/profile', async (req, res) => {
+        if (!req.session.userId) {
+            return res.status(401).send({ error: 'Not authenticated' });
+        }
+        const profile = await db('user_profile')
+            .select(
+                'skills',
+                'experience',
+                'total_experience_years',
+                'career_level',
+                'category',
+                'summary'
+            )
+            .where('user_id', req.session.userId)
+            .first();
+        if (!profile) {
+            return res.status(404).send({ error: 'Profile not found' });
+        }
+        profile.total_experience_years = Number(profile.total_experience_years);
+        if (!Array.isArray(profile.experience)) {
+            profile.experience = Object.values(profile.experience);
+        }
+        return { data: profile };
     });
 
     api.get('/auth/me', async (req, res) => {

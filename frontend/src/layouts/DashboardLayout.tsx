@@ -29,6 +29,7 @@ import { fetcher } from '~/core';
 const navItems = [
   { label: 'Home', url: '/dashboard' },
   { label: 'Matches', url: '/dashboard/matches' },
+  { label: 'Liked Jobs', url: '/dashboard/liked' },
 ];
 
 export default function DashboardLayout() {

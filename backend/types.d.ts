@@ -1,5 +1,5 @@
 import '@fastify/session';
-import type { authSchema } from './src/routeSchema.js';
+import type { authSchema, jobFeedbackSchema } from './src/routeSchema.js';
 
 declare module 'fastify' {
     interface Session {
@@ -26,6 +26,7 @@ type InferSchemaType<T> = T extends { properties: infer P }
     : never;
 
 export type AuthBody = InferSchemaType<typeof authSchema>;
+export type JobFeedbackBody = InferSchemaType<typeof jobFeedbackSchema>;
 
 export interface JobPostingsDetails {
     id: string;
@@ -78,5 +79,10 @@ declare module 'knex/types/tables.js' {
         job_postings_details: JobPostingsDetails;
         user: User;
         user_profile: UserProfile;
+        user_job_feedback: {
+            user_id: string;
+            job_id: number;
+            liked: boolean;
+        };
     }
 }

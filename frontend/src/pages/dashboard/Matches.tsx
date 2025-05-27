@@ -3,6 +3,7 @@ import { fetcher } from '~/core';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '~/components/card';
 import { Text } from '~/components/text';
 import { Button } from '~/components/button';
+import clsx from 'clsx';
 
 interface JobMatch {
   id: string;
@@ -21,23 +22,40 @@ export default function DashboardMatches() {
   const [matches, setMatches] = useState<JobMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submittingFeedbackFor, setSubmittingFeedbackFor] = useState<string | null>(null);
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, boolean>>({});
+  const [totalRated, setTotalRated] = useState(0);
+  const MAX_TOTAL = 21;
+
+  const fetchMatches = async () => {
+    try {
+      setLoading(true);
+      const response = await fetcher<MatchResponse>({ url: '/match-job' });
+      setMatches(response.results);
+    } catch (err) {
+      console.error('Error fetching matches:', err);
+      setError('Failed to load job matches. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchMatches() {
-      try {
-        setLoading(true);
-        const response = await fetcher<MatchResponse>({ url: '/match-job' });
-        setMatches(response.results);
-      } catch (err) {
-        console.error('Error fetching matches:', err);
-        setError('Failed to load job matches. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    }
-
     fetchMatches();
   }, []);
+
+  useEffect(() => {
+    if (!loading && matches.length > 0 && Object.keys(feedbackMap).length === matches.length) {
+      const newTotal = totalRated + matches.length;
+      if (newTotal < MAX_TOTAL) {
+        setTotalRated(newTotal);
+        setFeedbackMap({});
+        fetchMatches();
+      } else {
+        setTotalRated(newTotal);
+      }
+    }
+  }, [feedbackMap, loading, matches, totalRated]);
 
   // Function to format compensation
   const formatCompensation = (compensation: string) => {
@@ -57,6 +75,14 @@ export default function DashboardMatches() {
         <Card className="bg-red-900/20 border-red-800">
           <CardContent className="pt-6">
             <Text className="text-red-300">{error}</Text>
+          </CardContent>
+        </Card>
+      ) : totalRated >= MAX_TOTAL ? (
+        <Card>
+          <CardContent className="pt-6">
+            <Text>
+              You’ve reviewed all {MAX_TOTAL} job recommendations.
+            </Text>
           </CardContent>
         </Card>
       ) : matches.length === 0 ? (
@@ -94,7 +120,54 @@ export default function DashboardMatches() {
                 <Text className="line-clamp-3 text-zinc-300">{job.summary}</Text>
               </CardContent>
               <CardFooter className="border-t border-zinc-800 bg-zinc-900/50 flex justify-between">
-                <div className="text-sm text-zinc-400">ID: {job.id}</div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    color="green"
+                    disabled={submittingFeedbackFor === job.id}
+                    className={clsx(
+                      feedbackMap[job.id] === true &&
+                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-green-500'
+                    )}
+                    onClick={() => {
+                      setError(null);
+                      setSubmittingFeedbackFor(job.id);
+                      fetcher({ method: 'POST', url: '/match-job/feedback', body: { id: job.id, liked: true } })
+                        .catch((err) => {
+                          console.error('Error submitting feedback:', err);
+                          setError('Failed to submit feedback. Please try again.');
+                        })
+                        .finally(() => {
+                          setSubmittingFeedbackFor(null);
+                          setFeedbackMap((prev) => ({ ...prev, [job.id]: true }));
+                        });
+                    }}
+                  >
+                    👍
+                  </Button>
+                  <Button
+                    color="red"
+                    disabled={submittingFeedbackFor === job.id}
+                    className={clsx(
+                      feedbackMap[job.id] === false &&
+                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-red-500'
+                    )}
+                    onClick={() => {
+                      setError(null);
+                      setSubmittingFeedbackFor(job.id);
+                      fetcher({ method: 'POST', url: '/match-job/feedback', body: { id: job.id, liked: false } })
+                        .catch((err) => {
+                          console.error('Error submitting feedback:', err);
+                          setError('Failed to submit feedback. Please try again.');
+                        })
+                        .finally(() => {
+                          setSubmittingFeedbackFor(null);
+                          setFeedbackMap((prev) => ({ ...prev, [job.id]: false }));
+                        });
+                    }}
+                  >
+                    👎
+                  </Button>
+                </div>
                 <Button color="indigo">View Details</Button>
               </CardFooter>
             </Card>
