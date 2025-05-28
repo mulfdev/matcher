@@ -8,6 +8,7 @@ import {
     llm,
     weightedVectorCombine,
     type MessageContent,
+    getHybridRecommendations,
 } from '../core.js';
 import { OAuth2Client } from 'google-auth-library';
 import { createId } from '@paralleldrive/cuid2';
@@ -412,6 +413,20 @@ export function apiRoutes(api: FastifyInstance) {
             profile.experience = Object.values(profile.experience);
         }
         return { data: profile };
+    });
+
+    // Hybrid Recommendation endpoint
+    api.get('/hybrid-recommendations', async (req, res) => {
+        if (!req.session.userId) {
+            return res.status(401).send({ error: 'Not authenticated' });
+        }
+        try {
+            const results = await getHybridRecommendations(db, req.session.userId, 10);
+            return res.send({ results });
+        } catch (err) {
+            console.error(err);
+            return res.status(500).send({ error: 'Failed to get hybrid recommendations' });
+        }
     });
 
     api.get('/auth/me', async (req, res) => {
