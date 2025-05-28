@@ -20,6 +20,58 @@ interface MatchResponse {
   results: JobMatch[];
 }
 
+function MatchesSkeletonCard() {
+  return (
+    <div
+      className={clsx(
+        'overflow-hidden border-2 border-zinc-800 shadow-xl relative group',
+        'bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60',
+        'animate-pulse'
+      )}
+      style={{
+        boxShadow: '0 4px 32px 0 rgba(168,85,247,0.10)',
+      }}
+    >
+      <div className="absolute right-0 top-0 m-4">
+        <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-3 py-1 text-xs font-bold text-white shadow-md opacity-60">
+          &nbsp;
+        </span>
+      </div>
+      <div className="pb-2 px-6 pt-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="h-6 w-40 bg-zinc-800 rounded mb-2" />
+            <div className="flex items-center mt-1 text-zinc-400 text-sm gap-2">
+              <div className="h-4 w-24 bg-zinc-800 rounded" />
+              <div className="mx-2 h-4 w-2 bg-zinc-800 rounded" />
+              <div className="h-4 w-20 bg-zinc-800 rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="px-6 pb-4">
+        <div className="h-4 w-full bg-zinc-800 rounded mb-2" />
+        <div className="h-4 w-3/4 bg-zinc-800 rounded mb-2" />
+        <div className="h-4 w-1/2 bg-zinc-800 rounded" />
+        <div className="mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-4 py-3 shadow-inner border border-purple-800 flex items-start gap-2 opacity-60">
+          <div className="h-5 w-5 bg-purple-800 rounded-full mr-2" />
+          <div className="flex-1">
+            <div className="h-3 w-24 bg-purple-800 rounded mb-1" />
+            <div className="h-3 w-32 bg-purple-800 rounded" />
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-zinc-800 bg-zinc-900/60 flex justify-between items-center px-6 py-4">
+        <div className="flex items-center space-x-2">
+          <div className="h-10 w-10 bg-green-900/40 rounded-lg" />
+          <div className="h-10 w-10 bg-rose-900/40 rounded-lg" />
+        </div>
+        <div className="h-8 w-24 bg-indigo-900/40 rounded" />
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardMatches() {
   const [matches, setMatches] = useState<JobMatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,10 +128,10 @@ export default function DashboardMatches() {
       </h1>
 
       {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-pulse text-purple-400 text-xl font-semibold tracking-wide">
-            Finding your best matches...
-          </div>
+        <div className="space-y-8">
+          {[...Array(3)].map((_, i) => (
+            <MatchesSkeletonCard key={i} />
+          ))}
         </div>
       ) : error ? (
         <Card className="bg-gradient-to-r from-red-900/40 to-zinc-900/40 border-red-800 shadow-lg">
