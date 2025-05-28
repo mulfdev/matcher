@@ -171,12 +171,13 @@ export default function DashboardMatches() {
               </CardContent>
               <CardFooter className="border-t border-zinc-800 bg-zinc-900/60 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
+                  {/* Thumbs Up Button */}
                   <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      "rounded-full p-3 transition-all duration-200 shadow-md border-2",
-                      "bg-gradient-to-tr from-green-500/80 via-green-400/80 to-emerald-400/80",
-                      "hover:from-green-400 hover:to-emerald-300 hover:scale-110",
+                      "relative rounded-full p-3 transition-all duration-200 shadow-xl border-2 group",
+                      "bg-gradient-to-br from-green-500/90 via-emerald-500/80 to-indigo-400/70",
+                      "hover:from-green-400 hover:to-indigo-300 hover:scale-110",
                       feedbackMap[job.id] === true
                         ? "ring-4 ring-green-400 border-green-400 scale-110"
                         : "border-transparent",
@@ -197,16 +198,21 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
+                    <span className="absolute -top-2 -right-2">
+                      {feedbackMap[job.id] === true && (
+                        <span className="inline-block animate-bounce text-green-300 text-lg">👍</span>
+                      )}
+                    </span>
                     <svg
                       className={clsx(
-                        "w-6 h-6",
+                        "w-7 h-7 drop-shadow-lg",
                         feedbackMap[job.id] === true
-                          ? "text-white drop-shadow"
-                          : "text-green-900"
+                          ? "text-white"
+                          : "text-green-900 group-hover:text-white"
                       )}
                       fill={feedbackMap[job.id] === true ? "currentColor" : "none"}
                       stroke="currentColor"
-                      strokeWidth={2}
+                      strokeWidth={2.2}
                       viewBox="0 0 24 24"
                     >
                       <path
@@ -216,12 +222,13 @@ export default function DashboardMatches() {
                       />
                     </svg>
                   </button>
+                  {/* Thumbs Down Button */}
                   <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      "rounded-full p-3 transition-all duration-200 shadow-md border-2",
-                      "bg-gradient-to-tr from-rose-500/80 via-pink-400/80 to-red-400/80",
-                      "hover:from-rose-400 hover:to-red-300 hover:scale-110",
+                      "relative rounded-full p-3 transition-all duration-200 shadow-xl border-2 group",
+                      "bg-gradient-to-br from-rose-500/90 via-pink-500/80 to-indigo-400/70",
+                      "hover:from-rose-400 hover:to-indigo-300 hover:scale-110",
                       feedbackMap[job.id] === false
                         ? "ring-4 ring-rose-400 border-rose-400 scale-110"
                         : "border-transparent",
@@ -242,16 +249,21 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
+                    <span className="absolute -top-2 -right-2">
+                      {feedbackMap[job.id] === false && (
+                        <span className="inline-block animate-bounce text-rose-300 text-lg">👎</span>
+                      )}
+                    </span>
                     <svg
                       className={clsx(
-                        "w-6 h-6",
+                        "w-7 h-7 drop-shadow-lg",
                         feedbackMap[job.id] === false
-                          ? "text-white drop-shadow"
-                          : "text-rose-900"
+                          ? "text-white"
+                          : "text-rose-900 group-hover:text-white"
                       )}
                       fill={feedbackMap[job.id] === false ? "currentColor" : "none"}
                       stroke="currentColor"
-                      strokeWidth={2}
+                      strokeWidth={2.2}
                       viewBox="0 0 24 24"
                     >
                       <path
