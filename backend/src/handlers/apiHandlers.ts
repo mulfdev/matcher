@@ -267,10 +267,21 @@ export function apiRoutes(api: FastifyInstance) {
         }
     );
 
+    // Ensure only one /match-job request is in flight at a time
+    let matchJobInFlight: Promise<any> | null = null;
+    let matchJobAbortController: AbortController | null = null;
+
     api.get('/match-job', async (req, res) => {
         if (!req.session.userId) {
             return res.status(400).send({ error: 'must be signed in' });
         }
+
+        // Abort any previous in-flight request
+        if (matchJobAbortController) {
+            matchJobAbortController.abort();
+        }
+        matchJobAbortController = new AbortController();
+        const { signal } = matchJobAbortController;
 
         // Fetch user profile
         const userProfile = await db('user_profile')
@@ -309,14 +320,16 @@ export function apiRoutes(api: FastifyInstance) {
             return res.status(404).send({ error: 'No jobs available for matching.' });
         }
 
-        // Use LLM to rank jobs
+        // Use LLM to rank jobs, ensuring only one in flight
         try {
             const { llmJobMatch } = await import('../core.js');
-            const ranked = await llmJobMatch({
+            matchJobInFlight = llmJobMatch({
                 userProfile,
                 jobs,
                 maxResults: 7,
+                signal,
             });
+            const ranked = await matchJobInFlight;
 
             // Attach job details and reasons
             const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
@@ -327,10 +340,16 @@ export function apiRoutes(api: FastifyInstance) {
             }));
 
             return { results };
-        } catch (e) {
+        } catch (e: any) {
+            if (e.name === 'AbortError' || e.message === 'Previous LLM job match request aborted') {
+                return res.status(409).send({ error: 'Previous job match request aborted.' });
+            }
             console.error('LLM job match error:', e);
             // fallback: return jobs unranked
             return { results: jobs };
+        } finally {
+            matchJobInFlight = null;
+            matchJobAbortController = null;
         }
     });
 

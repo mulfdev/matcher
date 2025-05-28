@@ -109,10 +109,19 @@ export async function llm({ base64Images }: LlmParams) {
  * Use LLM to match a user profile to a list of jobs.
  * Returns jobs ranked by LLM's assessment of fit.
  */
+let llmJobMatchAbortController: AbortController | null = null;
+let llmJobMatchInFlight: Promise<any> | null = null;
+
+/**
+ * Use LLM to match a user profile to a list of jobs.
+ * Ensures only one request is in flight at a time; aborts any previous request.
+ * Returns jobs ranked by LLM's assessment of fit.
+ */
 export async function llmJobMatch({
     userProfile,
     jobs,
     maxResults = 7,
+    signal,
 }: {
     userProfile: UserProfile,
     jobs: Array<{
@@ -123,7 +132,15 @@ export async function llmJobMatch({
         summary?: string;
     }>,
     maxResults?: number,
+    signal?: AbortSignal,
 }) {
+    // Abort any previous in-flight request
+    if (llmJobMatchAbortController) {
+        llmJobMatchAbortController.abort();
+    }
+    llmJobMatchAbortController = new AbortController();
+    const effectiveSignal = signal ?? llmJobMatchAbortController.signal;
+
     // Compose a prompt for the LLM
     const prompt = `
 You are an expert career advisor and job matching assistant. Your task is to recommend the best job opportunities for a user based on their profile and the provided job postings. Carefully analyze the user's skills, experience, career level, and summary, and compare them to the requirements and descriptions of each job. Consider both explicit and implicit matches (e.g., transferable skills, relevant experience, and career goals).
@@ -149,7 +166,9 @@ Return at most ${maxResults} results.
 `;
 
     const model = 'google/gemini-2.5-flash-preview-05-20';
-    const response = await got.post('https://openrouter.ai/api/v1/chat/completions', {
+
+    // Store the in-flight promise so only the latest is awaited
+    llmJobMatchInFlight = got.post('https://openrouter.ai/api/v1/chat/completions', {
         headers: {
             Authorization: `Bearer ${OPENROUTER_KEY}`,
             'Content-Type': 'application/json',
@@ -165,7 +184,21 @@ Return at most ${maxResults} results.
             presence_penalty: 0,
         },
         responseType: 'json',
+        signal: effectiveSignal,
     });
+
+    let response;
+    try {
+        response = await llmJobMatchInFlight;
+    } catch (err: any) {
+        if (err.name === 'AbortError') {
+            throw new Error('Previous LLM job match request aborted');
+        }
+        throw err;
+    } finally {
+        llmJobMatchInFlight = null;
+        llmJobMatchAbortController = null;
+    }
 
     const body = response.body as {
         choices?: {
