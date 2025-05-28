@@ -180,7 +180,7 @@ export default function DashboardMatches() {
               }}
             >
               <div className="absolute right-0 top-0 m-2 sm:m-4">
-                <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-2 py-1 sm:px-3 sm:py-1 text-xs font-bold text-white shadow-md">
+                <span className="hidden sm:inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-2 py-1 sm:px-3 sm:py-1 text-xs font-bold text-white shadow-md">
                   Match #{idx + 1}
                 </span>
               </div>
@@ -237,20 +237,20 @@ export default function DashboardMatches() {
                   {job.summary}
                 </Text>
                 {job.reason && (
-                  <div className="mt-3 sm:mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-3 sm:px-4 py-2.5 sm:py-3 shadow-inner border border-purple-800 flex items-start gap-2">
-                    <svg
-                      className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
-                    </svg>
-                    <div>
-                      <span className="font-semibold text-purple-200">Why this match:</span>
-                      <span className="ml-1 text-purple-100">{job.reason}</span>
+                  <div className="mt-3 sm:mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-2.5 sm:px-4 py-2 sm:py-3 shadow-inner border border-purple-800 flex flex-col sm:flex-row items-start gap-2">
+                    <div className="flex items-center gap-2 w-full">
+                      <svg
+                        className="w-5 h-5 text-purple-400 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
+                      </svg>
+                      <span className="font-semibold text-purple-200 text-sm sm:text-base">Why this match:</span>
                     </div>
+                    <span className="ml-0 sm:ml-1 text-purple-100 text-sm sm:text-base">{job.reason}</span>
                   </div>
                 )}
               </CardContent>
