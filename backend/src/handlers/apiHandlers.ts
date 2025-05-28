@@ -1,12 +1,7 @@
 import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import got from 'got';
 import assert from 'assert';
-import {
-    db,
-    embedder,
-    llm,
-    type MessageContent,
-} from '../core.js';
+import { db, embedder, llm, type MessageContent } from '../core.js';
 import { OAuth2Client } from 'google-auth-library';
 import { createId } from '@paralleldrive/cuid2';
 import { join } from 'path';
@@ -311,10 +306,18 @@ export function apiRoutes(api: FastifyInstance) {
 
         // Fix: Ensure all required fields are present and types are correct
         const jobs = jobsRaw
-            .filter((j): j is { id: string; title: string; location?: string; compensation?: string; summary?: string } =>
-                typeof j.id === 'string' && typeof j.title === 'string'
+            .filter(
+                (
+                    j
+                ): j is {
+                    id: string;
+                    title: string;
+                    location?: string;
+                    compensation?: string;
+                    summary?: string;
+                } => typeof j.id === 'string' && typeof j.title === 'string'
             )
-            .map(j => ({
+            .map((j) => ({
                 id: j.id,
                 title: j.title,
                 location: j.location ?? undefined,
@@ -331,7 +334,7 @@ export function apiRoutes(api: FastifyInstance) {
             });
 
             // Attach job details and reasons
-            const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
+            const jobMap = Object.fromEntries(jobs.map((j) => [j.id, j]));
             const results = ranked.map((r: { id: string; score: number; reason?: string }) => ({
                 ...jobMap[r.id],
                 score: r.score,
@@ -420,7 +423,6 @@ export function apiRoutes(api: FastifyInstance) {
 
     api.get('/logout', async (req, res) => {
         await req.session.destroy();
-        res.clearCookie('sessionId');
         return res.status(200).send({});
     });
 }

@@ -19,6 +19,7 @@ assert(typeof COOKIE_SECRET === 'string', 'COOKIE_SECRET must be set');
 
 const app = Fastify({
     logger: false,
+    trustProxy: true,
 });
 
 //
@@ -28,6 +29,7 @@ const app = Fastify({
 const store = new ConnectSessionKnexStore({
     knex: db,
     tableName: 'sessions',
+    debug: true,
 });
 
 app.register(cookie);
@@ -40,8 +42,14 @@ app.register(fastifySession, {
         httpOnly: true,
         sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000, // In milliseconds
+        path: '/',
     },
     saveUninitialized: false,
+});
+
+app.register(cors, {
+    origin: ['https://backend-bold-glade-2217.fly.dev', 'http://localhost:5173'],
+    credentials: true,
 });
 
 app.register(fastifyMultipart, {
