@@ -27,47 +27,48 @@ function MatchesSkeletonCard() {
         'overflow-hidden border-2 border-zinc-800 shadow-xl relative group',
         'bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60',
         'animate-pulse',
-        'rounded-2xl' // Match the card's rounded corners
+        'rounded-2xl',
+        'sm:p-0 p-2'
       )}
       style={{
         boxShadow: '0 4px 32px 0 rgba(168,85,247,0.10)',
       }}
     >
-      <div className="absolute right-0 top-0 m-4">
-        <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-3 py-1 text-xs font-bold text-white shadow-md opacity-60">
+      <div className="absolute right-0 top-0 m-2 sm:m-4">
+        <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-2 py-1 sm:px-3 sm:py-1 text-xs font-bold text-white shadow-md opacity-60">
           &nbsp;
         </span>
       </div>
-      <div className="pb-2 px-6 pt-6">
-        <div className="flex justify-between items-start">
-          <div>
-            <div className="h-6 w-40 bg-zinc-800 rounded mb-2" />
-            <div className="flex items-center mt-1 text-zinc-400 text-sm gap-2">
-              <div className="h-4 w-24 bg-zinc-800 rounded" />
-              <div className="mx-2 h-4 w-2 bg-zinc-800 rounded" />
-              <div className="h-4 w-20 bg-zinc-800 rounded" />
+      <div className="pb-2 px-3 pt-4 sm:px-6 sm:pt-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div className="w-full">
+            <div className="h-5 sm:h-6 w-32 sm:w-40 bg-zinc-800 rounded mb-2" />
+            <div className="flex flex-wrap items-center mt-1 text-zinc-400 text-xs sm:text-sm gap-2">
+              <div className="h-4 w-20 sm:w-24 bg-zinc-800 rounded" />
+              <div className="mx-2 h-4 w-2 bg-zinc-800 rounded hidden sm:inline" />
+              <div className="h-4 w-16 sm:w-20 bg-zinc-800 rounded" />
             </div>
           </div>
         </div>
       </div>
-      <div className="px-6 pb-4">
+      <div className="px-3 sm:px-6 pb-3 sm:pb-4">
         <div className="h-4 w-full bg-zinc-800 rounded mb-2" />
         <div className="h-4 w-3/4 bg-zinc-800 rounded mb-2" />
         <div className="h-4 w-1/2 bg-zinc-800 rounded" />
-        <div className="mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-4 py-3 shadow-inner border border-purple-800 flex items-start gap-2 opacity-60">
+        <div className="mt-3 sm:mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-3 sm:px-4 py-2.5 sm:py-3 shadow-inner border border-purple-800 flex items-start gap-2 opacity-60">
           <div className="h-5 w-5 bg-purple-800 rounded-full mr-2" />
           <div className="flex-1">
-            <div className="h-3 w-24 bg-purple-800 rounded mb-1" />
-            <div className="h-3 w-32 bg-purple-800 rounded" />
+            <div className="h-3 w-20 sm:w-24 bg-purple-800 rounded mb-1" />
+            <div className="h-3 w-24 sm:w-32 bg-purple-800 rounded" />
           </div>
         </div>
       </div>
-      <div className="border-t border-zinc-800 bg-zinc-900/60 flex justify-between items-center px-6 py-4">
-        <div className="flex items-center space-x-2">
-          <div className="h-10 w-10 bg-green-900/40 rounded-lg" />
-          <div className="h-10 w-10 bg-rose-900/40 rounded-lg" />
+      <div className="border-t border-zinc-800 bg-zinc-900/60 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 px-2 sm:px-6 py-3 sm:py-4">
+        <div className="flex items-center space-x-2 mb-2 sm:mb-0">
+          <div className="h-9 w-9 sm:h-10 sm:w-10 bg-green-900/40 rounded-lg" />
+          <div className="h-9 w-9 sm:h-10 sm:w-10 bg-rose-900/40 rounded-lg" />
         </div>
-        <div className="h-8 w-24 bg-indigo-900/40 rounded" />
+        <div className="h-8 w-full sm:w-24 bg-indigo-900/40 rounded" />
       </div>
     </div>
   );
@@ -121,15 +122,15 @@ export default function DashboardMatches() {
 
   return (
     <div className="max-w-4xl mx-auto p-2 md:p-6">
-      <h1 className="text-white text-4xl font-extrabold mb-8 tracking-tight flex items-center gap-3">
+      <h1 className="text-white text-3xl sm:text-4xl font-extrabold mb-6 sm:mb-8 tracking-tight flex items-center gap-2 sm:gap-3">
         <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg">
           Your Job Matches
         </span>
-        <span className="inline-block animate-bounce text-2xl">✨</span>
+        <span className="inline-block animate-bounce text-xl sm:text-2xl">✨</span>
       </h1>
 
       {loading ? (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {[...Array(3)].map((_, i) => (
             <MatchesSkeletonCard key={i} />
           ))}
@@ -161,13 +162,15 @@ export default function DashboardMatches() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           {matches.map((job, idx) => (
             <Card
               key={job.id}
               className={clsx(
                 'overflow-hidden border-2 border-zinc-800 hover:border-purple-500 transition-colors duration-300 shadow-xl relative group',
-                'bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60'
+                'bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60',
+                'rounded-2xl',
+                'sm:p-0 p-2'
               )}
               style={{
                 boxShadow:
@@ -176,15 +179,15 @@ export default function DashboardMatches() {
                     : '0 4px 32px 0 rgba(99,102,241,0.10)',
               }}
             >
-              <div className="absolute right-0 top-0 m-4">
-                <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-3 py-1 text-xs font-bold text-white shadow-md">
+              <div className="absolute right-0 top-0 m-2 sm:m-4">
+                <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-2 py-1 sm:px-3 sm:py-1 text-xs font-bold text-white shadow-md">
                   Match #{idx + 1}
                 </span>
               </div>
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-2xl text-white font-bold flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <div className="w-full">
+                    <CardTitle className="text-lg sm:text-2xl text-white font-bold flex items-center gap-2">
                       <span>{job.title}</span>
                       <span className="text-purple-400">
                         {job.similarity && job.similarity > 0
@@ -192,7 +195,7 @@ export default function DashboardMatches() {
                           : ''}
                       </span>
                     </CardTitle>
-                    <div className="flex items-center mt-1 text-zinc-400 text-sm gap-2">
+                    <div className="flex flex-wrap items-center mt-1 text-zinc-400 text-xs sm:text-sm gap-2">
                       <span className="flex items-center gap-1">
                         <svg
                           className="w-4 h-4 text-purple-400"
@@ -210,7 +213,7 @@ export default function DashboardMatches() {
                       </span>
                       {job.compensation && (
                         <>
-                          <span className="mx-2">•</span>
+                          <span className="mx-2 hidden sm:inline">•</span>
                           <span className="flex items-center gap-1">
                             <svg
                               className="w-4 h-4 text-green-400"
@@ -230,11 +233,11 @@ export default function DashboardMatches() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Text className="line-clamp-4 text-zinc-200 text-base leading-relaxed">
+                <Text className="line-clamp-4 text-zinc-200 text-sm sm:text-base leading-relaxed">
                   {job.summary}
                 </Text>
                 {job.reason && (
-                  <div className="mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-4 py-3 shadow-inner border border-purple-800 flex items-start gap-2">
+                  <div className="mt-3 sm:mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-3 sm:px-4 py-2.5 sm:py-3 shadow-inner border border-purple-800 flex items-start gap-2">
                     <svg
                       className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0"
                       fill="none"
@@ -251,13 +254,13 @@ export default function DashboardMatches() {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="border-t border-zinc-800 bg-zinc-900/60 flex justify-between items-center">
-                <div className="flex items-center space-x-2">
+              <CardFooter className="border-t border-zinc-800 bg-zinc-900/60 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0 px-2 sm:px-6 py-3 sm:py-4">
+                <div className="flex items-center space-x-2 mb-2 sm:mb-0">
                   {/* Thumbs Up Button */}
                   <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      'relative rounded-lg p-3 transition-all duration-200 group',
+                      'relative rounded-lg p-2 sm:p-3 transition-all duration-200 group',
                       'bg-gradient-to-br from-green-500/90 via-emerald-500/80 to-indigo-400/70',
                       'hover:from-green-700 hover:to-indigo-300 hover:scale-110',
                       feedbackMap[job.id] === true
@@ -288,7 +291,7 @@ export default function DashboardMatches() {
                   >
                     <HandThumbUpIcon
                       className={clsx(
-                        'w-5.5 h-5.5 transition-colors duration-150',
+                        'w-5 h-5 sm:w-5.5 sm:h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === true
                           ? 'text-white'
                           : (hoveredThumb?.id === job.id && hoveredThumb?.type === 'up')
@@ -302,7 +305,7 @@ export default function DashboardMatches() {
                   <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      'relative rounded-lg p-3 transition-all duration-200 group',
+                      'relative rounded-lg p-2 sm:p-3 transition-all duration-200 group',
                       'bg-gradient-to-br from-rose-500/90 via-pink-500/80 to-indigo-400/70',
                       'hover:from-rose-700 hover:to-indigo-300 hover:scale-110',
                       feedbackMap[job.id] === false
@@ -333,7 +336,7 @@ export default function DashboardMatches() {
                   >
                     <HandThumbDownIcon
                       className={clsx(
-                        'w-5.5 h-5.5 transition-colors duration-150',
+                        'w-5 h-5 sm:w-5.5 sm:h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === false
                           ? 'text-white'
                           : (hoveredThumb?.id === job.id && hoveredThumb?.type === 'down')
@@ -346,7 +349,7 @@ export default function DashboardMatches() {
                 </div>
                 <Button
                   color="indigo"
-                  className="font-semibold shadow-md hover:scale-105 transition-transform duration-150"
+                  className="w-full sm:w-auto font-semibold shadow-md hover:scale-105 transition-transform duration-150"
                 >
                   View Details
                 </Button>
