@@ -66,51 +66,89 @@ export default function DashboardMatches() {
 
   return (
     <div className="max-w-4xl mx-auto p-2 md:p-6">
-      <h1 className="text-white text-3xl font-bold mb-6">Your Job Matches</h1>
+      <h1 className="text-white text-4xl font-extrabold mb-8 tracking-tight flex items-center gap-3">
+        <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-indigo-400 bg-clip-text text-transparent drop-shadow-lg">
+          Your Job Matches
+        </span>
+        <span className="inline-block animate-bounce text-2xl">✨</span>
+      </h1>
 
       {loading ? (
         <div className="flex justify-center items-center h-64">
-          <div className="animate-pulse text-purple-400">Loading matches...</div>
+          <div className="animate-pulse text-purple-400 text-xl font-semibold tracking-wide">
+            Finding your best matches...
+          </div>
         </div>
       ) : error ? (
-        <Card className="bg-red-900/20 border-red-800">
+        <Card className="bg-gradient-to-r from-red-900/40 to-zinc-900/40 border-red-800 shadow-lg">
           <CardContent className="pt-6">
             <Text className="text-red-300">{error}</Text>
           </CardContent>
         </Card>
       ) : totalRated >= MAX_TOTAL ? (
-        <Card>
-          <CardContent className="pt-6">
-            <Text>
+        <Card className="bg-gradient-to-r from-zinc-900/60 to-purple-900/40 border-purple-800 shadow-lg">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <span className="text-5xl mb-2">🎉</span>
+            <Text className="text-lg text-white font-semibold">
               You’ve reviewed all {MAX_TOTAL} job recommendations.
+            </Text>
+            <Text className="text-zinc-400 mt-2">
+              Check back soon for more opportunities!
             </Text>
           </CardContent>
         </Card>
       ) : matches.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <Text>
-              No job matches found. Please complete your profile to get matched with jobs.
+        <Card className="bg-gradient-to-r from-zinc-900/60 to-purple-900/40 border-purple-800 shadow-lg">
+          <CardContent className="pt-6 flex flex-col items-center">
+            <span className="text-4xl mb-2">🔍</span>
+            <Text className="text-lg text-white font-semibold">
+              No job matches found.
+            </Text>
+            <Text className="text-zinc-400 mt-2">
+              Please complete your profile to get matched with jobs.
             </Text>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
-          {matches.map((job) => (
+        <div className="space-y-8">
+          {matches.map((job, idx) => (
             <Card
               key={job.id}
-              className="overflow-hidden border-zinc-800 hover:border-purple-800 transition-colors duration-300"
+              className={clsx(
+                "overflow-hidden border-2 border-zinc-800 hover:border-purple-500 transition-colors duration-300 shadow-xl relative group",
+                "bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60"
+              )}
+              style={{
+                boxShadow:
+                  idx % 2 === 0
+                    ? "0 4px 32px 0 rgba(168,85,247,0.10)"
+                    : "0 4px 32px 0 rgba(99,102,241,0.10)",
+              }}
             >
+              <div className="absolute right-0 top-0 m-4">
+                <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-3 py-1 text-xs font-bold text-white shadow-md">
+                  Match #{idx + 1}
+                </span>
+              </div>
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-xl text-white">{job.title}</CardTitle>
-                    <div className="flex items-center mt-1 text-zinc-400 text-sm">
-                      <span>{job.location}</span>
+                    <CardTitle className="text-2xl text-white font-bold flex items-center gap-2">
+                      <span>{job.title}</span>
+                      <span className="text-purple-400">{job.similarity && job.similarity > 0 ? `• ${Math.round(job.similarity * 100)}%` : ""}</span>
+                    </CardTitle>
+                    <div className="flex items-center mt-1 text-zinc-400 text-sm gap-2">
+                      <span className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 12.414a4 4 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414-1.414z"></path><path d="M15 11a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path></svg>
+                        {job.location || <span className="italic text-zinc-500">Remote / Flexible</span>}
+                      </span>
                       {job.compensation && (
                         <>
                           <span className="mx-2">•</span>
-                          <span>{formatCompensation(job.compensation)}</span>
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
+                            {formatCompensation(job.compensation)}
+                          </span>
                         </>
                       )}
                     </div>
@@ -118,21 +156,28 @@ export default function DashboardMatches() {
                 </div>
               </CardHeader>
               <CardContent>
-                <Text className="line-clamp-3 text-zinc-300">{job.summary}</Text>
+                <Text className="line-clamp-4 text-zinc-200 text-base leading-relaxed">
+                  {job.summary}
+                </Text>
                 {job.reason && (
-                  <div className="mt-2 text-sm text-purple-300">
-                    <span className="font-semibold">Why this match:</span> {job.reason}
+                  <div className="mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-4 py-3 shadow-inner border border-purple-800 flex items-start gap-2">
+                    <svg className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path></svg>
+                    <div>
+                      <span className="font-semibold text-purple-200">Why this match:</span>
+                      <span className="ml-1 text-purple-100">{job.reason}</span>
+                    </div>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="border-t border-zinc-800 bg-zinc-900/50 flex justify-between">
+              <CardFooter className="border-t border-zinc-800 bg-zinc-900/60 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
                   <Button
                     color="green"
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
                       feedbackMap[job.id] === true &&
-                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-green-500'
+                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-green-500 scale-110',
+                      'transition-transform duration-150'
                     )}
                     onClick={() => {
                       setError(null);
@@ -148,14 +193,15 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
-                    👍
+                    <span className="text-lg">👍</span>
                   </Button>
                   <Button
                     color="red"
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
                       feedbackMap[job.id] === false &&
-                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-red-500'
+                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-red-500 scale-110',
+                      'transition-transform duration-150'
                     )}
                     onClick={() => {
                       setError(null);
@@ -171,10 +217,12 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
-                    👎
+                    <span className="text-lg">👎</span>
                   </Button>
                 </div>
-                <Button color="indigo">View Details</Button>
+                <Button color="indigo" className="font-semibold shadow-md hover:scale-105 transition-transform duration-150">
+                  View Details
+                </Button>
               </CardFooter>
             </Card>
           ))}
