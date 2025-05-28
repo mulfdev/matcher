@@ -55,17 +55,15 @@ export default function Dashboard() {
         method: 'POST',
         body: formData,
       });
-      setProcessed(true);
-      setProfile(res.data);
-      navigate('/dashboard/matches');
+      setUploading(false);
+      navigate('/dashboard/matches', { replace: true });
     } catch (error) {
+      setUploading(false);
       if (error instanceof Error) {
         setError('Upload error: ' + error.message);
       } else {
         setError('Upload failed. Please try again.');
       }
-    } finally {
-      setUploading(false);
     }
   };
 
