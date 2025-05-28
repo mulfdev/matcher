@@ -304,8 +304,9 @@ export function apiRoutes(api: FastifyInstance) {
 
         const jobs = await jobsQuery;
 
-        if (!jobs.length) {
-            return res.send({ results: [] });
+        // Ensure there are jobs to send to the LLM
+        if (!jobs || jobs.length === 0) {
+            return res.status(404).send({ error: 'No jobs available for matching.' });
         }
 
         // Use LLM to rank jobs
