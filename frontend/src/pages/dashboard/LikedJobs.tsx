@@ -89,7 +89,7 @@ export default function DashboardLikedJobs() {
             >
               <div className="absolute right-0 top-0 m-4">
                 <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-3 py-1 text-xs font-bold text-white shadow-md">
-                  Liked #{idx + 1}
+                  Liked
                 </span>
               </div>
               <CardHeader className="pb-2">
