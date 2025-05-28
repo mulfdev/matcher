@@ -126,7 +126,14 @@ export async function llmJobMatch({
 }) {
     // Compose a prompt for the LLM
     const prompt = `
-You are an expert career advisor. Given the following user profile and a list of job postings, rank the jobs from best to worst fit for the user. Only consider the information provided. Return a JSON array of job IDs in ranked order, with an optional explanation for each.
+You are an expert career advisor and job matching assistant. Your task is to recommend the best job opportunities for a user based on their profile and the provided job postings. Carefully analyze the user's skills, experience, career level, and summary, and compare them to the requirements and descriptions of each job. Consider both explicit and implicit matches (e.g., transferable skills, relevant experience, and career goals).
+
+Instructions:
+- Rank the jobs from best to worst fit for the user.
+- For each job, provide a "score" (higher is better) and a short explanation ("reason") for your ranking.
+- Only use the information provided in the user profile and job postings.
+- Do not invent or assume any information not present in the data.
+- Respond in the specified JSON format, with at most ${maxResults} results.
 
 User Profile:
 ${JSON.stringify(userProfile, null, 2)}
