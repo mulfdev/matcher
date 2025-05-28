@@ -87,11 +87,6 @@ export default function DashboardLikedJobs() {
                     : "0 4px 32px 0 rgba(99,102,241,0.10)",
               }}
             >
-              <div className="absolute right-0 top-0 m-4">
-                <span className="inline-block rounded-full bg-gradient-to-tr from-purple-500 via-pink-400 to-indigo-400 px-3 py-1 text-xs font-bold text-white shadow-md">
-                  Liked
-                </span>
-              </div>
               <CardHeader className="pb-2">
                 <CardTitle className="text-2xl text-white font-bold flex items-center gap-2">
                   <span>{job.title}</span>
