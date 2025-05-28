@@ -141,16 +141,27 @@ export async function llmJobMatch({
     llmJobMatchAbortController = new AbortController();
     const effectiveSignal = signal ?? llmJobMatchAbortController.signal;
 
-    // Compose a prompt for the LLM
+    // Compose a highly engineered prompt for the LLM
     const prompt = `
-You are an expert career advisor and job matching assistant. Your task is to recommend the best job opportunities for a user based on their profile and the provided job postings. Carefully analyze the user's skills, experience, career level, and summary, and compare them to the requirements and descriptions of each job. Consider both explicit and implicit matches (e.g., transferable skills, relevant experience, and career goals).
+You are a world-class AI career coach and job-matching expert. Your mission is to act as a hyper-analytical, unbiased, and insightful recommender system for job seekers. Given a user's detailed profile and a set of job postings, you must identify and rank the jobs that are the most compelling matches for this user.
+
+Your approach:
+- Deeply analyze the user's skills, experience, career level, industry, and career summary.
+- Carefully compare these attributes to each job's requirements, responsibilities, and context.
+- Consider both direct and transferable skills, relevant experience, and potential for growth.
+- Weigh not just explicit keyword matches, but also nuanced fit, such as career trajectory, soft skills, and alignment with the user's background.
+- If a job is a stretch or a growth opportunity, note this in your reasoning.
+- If a job is a poor fit, do not include it in the top results.
+- Be objective and avoid bias; do not invent or assume information not present in the data.
 
 Instructions:
-- Rank the jobs from best to worst fit for the user.
-- For each job, provide a "score" (higher is better) and a short explanation ("reason") for your ranking.
-- Only use the information provided in the user profile and job postings.
-- Do not invent or assume any information not present in the data.
-- Respond in the specified JSON format, with at most ${maxResults} results.
+1. Rank the jobs from best to worst fit for the user, based on your expert analysis.
+2. For each recommended job, provide:
+   - "id": the job's id
+   - "score": a number from 0 to 100 (higher = better fit; use the full range, not just 80-100)
+   - "reason": a concise, specific explanation (1-2 sentences) of why this job is a good fit for the user, referencing both the user's profile and the job's requirements.
+3. Only use the information provided below. Do not hallucinate or add extra details.
+4. Output a JSON array of at most ${maxResults} objects, sorted by descending score.
 
 User Profile:
 ${JSON.stringify(userProfile, null, 2)}
@@ -158,7 +169,7 @@ ${JSON.stringify(userProfile, null, 2)}
 Job Postings:
 ${JSON.stringify(jobs, null, 2)}
 
-Respond in the following JSON format:
+Respond ONLY in the following JSON format:
 [
   { "id": "<job_id>", "score": <number>, "reason": "<short explanation>" }
 ]
