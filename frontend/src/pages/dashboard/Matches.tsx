@@ -212,6 +212,8 @@ export default function DashboardMatches() {
                       submittingFeedbackFor === job.id && 'opacity-60 cursor-not-allowed'
                     )}
                     aria-label="Like"
+                    onMouseEnter={e => e.currentTarget.classList.add('z-10')}
+                    onMouseLeave={e => e.currentTarget.classList.remove('z-10')}
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
@@ -230,19 +232,13 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
-                    <span className="absolute -top-2 -right-2">
-                      {feedbackMap[job.id] === true && (
-                        <span className="inline-block animate-bounce text-green-300 text-lg">
-                          👍
-                        </span>
-                      )}
-                    </span>
                     <HandThumbUpIcon
                       className={clsx(
-                        'w-5.5 h-5.5',
+                        'w-5.5 h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === true
                           ? 'text-white'
-                          : 'text-green-900 group-hover:text-white'
+                          : 'text-green-900',
+                        'group-hover:text-white'
                       )}
                       aria-hidden="true"
                     />
@@ -251,15 +247,17 @@ export default function DashboardMatches() {
                   <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      'relative rounded-full p-3 transition-all duration-200 shadow-xl border-2 group',
+                      'relative rounded-lg p-3 transition-all duration-200 group',
                       'bg-gradient-to-br from-rose-500/90 via-pink-500/80 to-indigo-400/70',
-                      'hover:from-rose-400 hover:to-indigo-300 hover:scale-110',
+                      'hover:from-rose-700 hover:to-indigo-300 hover:scale-110',
                       feedbackMap[job.id] === false
                         ? 'ring-4 ring-rose-400 border-rose-400 scale-110'
                         : 'border-transparent',
                       submittingFeedbackFor === job.id && 'opacity-60 cursor-not-allowed'
                     )}
                     aria-label="Dislike"
+                    onMouseEnter={e => e.currentTarget.classList.add('z-10')}
+                    onMouseLeave={e => e.currentTarget.classList.remove('z-10')}
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
@@ -278,19 +276,13 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
-                    <span className="absolute -top-2 -right-2">
-                      {feedbackMap[job.id] === false && (
-                        <span className="inline-block animate-bounce text-rose-300 text-lg">
-                          👎
-                        </span>
-                      )}
-                    </span>
                     <HandThumbDownIcon
                       className={clsx(
-                        'w-5.5 h-5.5',
+                        'w-5.5 h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === false
                           ? 'text-white'
-                          : 'text-rose-900 group-hover:text-white'
+                          : 'text-rose-900',
+                        'group-hover:text-white'
                       )}
                       aria-hidden="true"
                     />
