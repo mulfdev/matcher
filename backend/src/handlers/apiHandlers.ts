@@ -276,12 +276,15 @@ export function apiRoutes(api: FastifyInstance) {
         // Fetch user profile
         const userProfile = await db('user_profile')
             .select(
+                'user_id',
                 'skills',
                 'experience',
                 'total_experience_years',
                 'career_level',
                 'category',
-                'summary'
+                'summary',
+                'skill_embedding',
+                'summary_embedding'
             )
             .where('user_id', req.session.userId)
             .first();
@@ -298,15 +301,26 @@ export function apiRoutes(api: FastifyInstance) {
         const excludedJobIds = feedbacks.map((f) => f.job_id);
 
         // Fetch a batch of jobs to consider (limit to 30 for LLM context)
-        const jobs = await db('job_postings_details')
+        const jobsRaw = await db('job_postings_details')
             .select('id', 'title', 'location', 'compensation', 'summary')
             .whereNotIn('id', excludedJobIds)
             .limit(30);
 
         // Ensure there are jobs to send to the LLM
-        if (!jobs || jobs.length === 0) {
+        if (!jobsRaw || jobsRaw.length === 0) {
             return res.status(404).send({ error: 'No jobs available for matching.' });
         }
+
+        // Fix: Ensure all required fields are present and types are correct
+        const jobs = jobsRaw
+            .filter(j => typeof j.id === 'string' && typeof j.title === 'string')
+            .map(j => ({
+                id: j.id,
+                title: j.title as string,
+                location: j.location ?? undefined,
+                compensation: j.compensation ?? undefined,
+                summary: j.summary ?? undefined,
+            }));
 
         try {
             const { llmJobMatch } = await import('../core.js');
