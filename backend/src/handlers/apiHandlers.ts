@@ -305,7 +305,7 @@ export function apiRoutes(api: FastifyInstance) {
             .limit(30);
 
         // Ensure there are jobs to send to the LLM
-        if (!jobsRaw || jobsRaw.length === 0) {
+        if (jobsRaw.length === 0) {
             return res.status(404).send({ error: 'No jobs available for matching.' });
         }
 
@@ -316,7 +316,7 @@ export function apiRoutes(api: FastifyInstance) {
             )
             .map(j => ({
                 id: j.id,
-                title: j.title!,
+                title: j.title,
                 location: j.location ?? undefined,
                 compensation: j.compensation ?? undefined,
                 summary: j.summary ?? undefined,
