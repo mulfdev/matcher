@@ -272,85 +272,65 @@ export function apiRoutes(api: FastifyInstance) {
             return res.status(400).send({ error: 'must be signed in' });
         }
 
-        const [userEmbeddings] = await db('user_profile')
-            .select('skill_embedding', 'summary_embedding')
-            .where('user_id', req.session.userId);
+        // Fetch user profile
+        const userProfile = await db('user_profile')
+            .select(
+                'skills',
+                'experience',
+                'total_experience_years',
+                'career_level',
+                'category',
+                'summary'
+            )
+            .where('user_id', req.session.userId)
+            .first();
 
-        if (!userEmbeddings) {
-            throw new Error('User has not been onboarded yet');
+        if (!userProfile) {
+            return res.status(400).send({ error: 'User profile not found' });
         }
 
-        const baseVec = weightedVectorCombine(
-            ensureNumericVector(userEmbeddings.skill_embedding),
-            ensureNumericVector(userEmbeddings.summary_embedding),
-            0.25,
-            0.75
-        );
-
+        // Exclude jobs the user has already given feedback on
         const feedbacks = await db('user_job_feedback')
             .select('job_id', 'liked')
             .where('user_id', req.session.userId);
 
-        const likedIds = feedbacks.filter((f) => f.liked).map((f) => f.job_id);
-        const vectors = [baseVec];
-        if (likedIds.length > 0) {
-            const likedEmbeddings = await db('job_postings_details')
-                .select('skill_embedding', 'summary_embedding')
-                .whereIn('id', likedIds);
-            for (const row of likedEmbeddings) {
-                vectors.push(
-                    weightedVectorCombine(
-                        ensureNumericVector(row.skill_embedding),
-                        ensureNumericVector(row.summary_embedding),
-                        0.25,
-                        0.75
-                    )
-                );
-            }
+        const excludedJobIds = feedbacks.map((f) => f.job_id);
+
+        // Fetch a batch of jobs to consider (limit to 30 for LLM context)
+        let jobsQuery = db('job_postings_details')
+            .select('id', 'title', 'location', 'compensation', 'summary')
+            .whereNotIn('id', excludedJobIds)
+            .limit(30);
+
+        const jobs = await jobsQuery;
+
+        if (!jobs.length) {
+            return res.send({ results: [] });
         }
 
-        const [firstVec] = vectors;
-        if (!firstVec) {
-            throw new Error('No vectors available for matching');
-        }
-        const refinedVec: number[] = [];
-        const dim = firstVec.length;
-        for (let i = 0; i < dim; i++) {
-            let sum = 0;
-            for (const v of vectors) {
-                if (i >= v.length) {
-                    throw new Error(
-                        `Mismatch in vector dimensions: expected ${dim}, got ${v.length}`
-                    );
-                }
-                sum += v[i] ?? 0;
-            }
-            refinedVec.push(sum / vectors.length);
-        }
+        // Use LLM to rank jobs
+        try {
+            const { llmJobMatch } = await import('../core.js');
+            const ranked = await llmJobMatch({
+                userProfile,
+                jobs,
+                maxResults: 7,
+            });
 
-        let query = db<SimilarityResult>('job_postings_details')
-            .select(
-                'id',
-                'title',
-                'location',
-                'compensation',
-                'summary',
-                db.raw('(skill_embedding <-> ?::vector(1536)) AS similarity', [
-                    `[${refinedVec.join(',')}]`,
-                ])
-            )
-            .orderBy('similarity', 'asc')
-            .limit(7);
+            // Attach job details and reasons
+            const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
+            const results = ranked.map(r => ({
+                ...jobMap[r.id],
+                score: r.score,
+                reason: r.reason,
+            }));
 
-        if (feedbacks.length > 0) {
-            query = query.whereNotIn(
-                'id',
-                feedbacks.map((f) => f.job_id)
-            );
+            return { results };
+        } catch (e) {
+            console.error('LLM job match error:', e);
+            // fallback: return jobs unranked
+            return { results: jobs };
         }
-
-        const results = await query;
-        return { results };
     });
 
     api.post<{ Body: JobFeedbackBody }>(

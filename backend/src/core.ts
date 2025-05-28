@@ -104,3 +104,83 @@ export async function llm({ base64Images }: LlmParams) {
 
     return content;
 }
+
+/**
+ * Use LLM to match a user profile to a list of jobs.
+ * Returns jobs ranked by LLM's assessment of fit.
+ */
+export async function llmJobMatch({
+    userProfile,
+    jobs,
+    maxResults = 7,
+}: {
+    userProfile: UserProfile,
+    jobs: Array<{
+        id: string;
+        title: string;
+        location?: string;
+        compensation?: string;
+        summary?: string;
+    }>,
+    maxResults?: number,
+}) {
+    // Compose a prompt for the LLM
+    const prompt = `
+You are an expert career advisor. Given the following user profile and a list of job postings, rank the jobs from best to worst fit for the user. Only consider the information provided. Return a JSON array of job IDs in ranked order, with an optional explanation for each.
+
+User Profile:
+${JSON.stringify(userProfile, null, 2)}
+
+Job Postings:
+${JSON.stringify(jobs, null, 2)}
+
+Respond in the following JSON format:
+[
+  { "id": "<job_id>", "score": <number>, "reason": "<short explanation>" }
+]
+Return at most ${maxResults} results.
+`;
+
+    const model = 'google/gemini-2.5-flash-preview-05-20';
+    const response = await got.post('https://openrouter.ai/api/v1/chat/completions', {
+        headers: {
+            Authorization: `Bearer ${OPENROUTER_KEY}`,
+            'Content-Type': 'application/json',
+        },
+        json: {
+            model,
+            messages: [
+                { role: 'user', content: prompt }
+            ],
+            temperature: 0.2,
+            top_p: 0.9,
+            frequency_penalty: 0.3,
+            presence_penalty: 0,
+        },
+        responseType: 'json',
+    });
+
+    const body = response.body as {
+        choices?: {
+            message?: {
+                content?: string;
+            };
+        }[];
+    };
+
+    const content = body?.choices?.[0]?.message?.content;
+    if (!content) throw new Error('No response from LLM');
+
+    let results: Array<{ id: string, score: number, reason?: string }> = [];
+    try {
+        results = JSON.parse(content);
+    } catch (e) {
+        throw new Error('Failed to parse LLM job match response');
+    }
+
+    // Only return jobs that exist in the input list, in order
+    const jobIds = new Set(jobs.map(j => j.id));
+    return results
+        .filter(r => jobIds.has(r.id))
+        .slice(0, maxResults);
+}
