@@ -206,7 +206,7 @@ export default function DashboardMatches() {
                     </span>
                     <HandThumbUpIcon
                       className={clsx(
-                        "w-7 h-7 drop-shadow-lg",
+                        "w-5.5 h-5.5 drop-shadow-lg", // ~21% smaller than w-7 h-7 (w-7 = 1.75rem, w-5.5 = 1.375rem)
                         feedbackMap[job.id] === true
                           ? "text-white"
                           : "text-green-900 group-hover:text-white"
@@ -248,7 +248,7 @@ export default function DashboardMatches() {
                     </span>
                     <HandThumbDownIcon
                       className={clsx(
-                        "w-7 h-7 drop-shadow-lg",
+                        "w-5.5 h-5.5 drop-shadow-lg", // ~21% smaller than w-7 h-7
                         feedbackMap[job.id] === false
                           ? "text-white"
                           : "text-rose-900 group-hover:text-white"
