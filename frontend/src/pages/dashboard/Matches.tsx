@@ -187,18 +187,18 @@ export default function DashboardMatches() {
               <CardHeader className="pb-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <div className="w-full">
-                    <CardTitle className="text-lg sm:text-2xl text-white font-bold flex items-center gap-2">
+                    <CardTitle className="text-lg sm:text-3xl text-white font-extrabold flex items-center gap-2 sm:gap-4">
                       <span>{job.title}</span>
-                      <span className="text-purple-400">
+                      <span className="text-purple-400 text-base sm:text-xl font-semibold">
                         {job.similarity && job.similarity > 0
                           ? `• ${Math.round(job.similarity * 100)}%`
                           : ''}
                       </span>
                     </CardTitle>
-                    <div className="flex flex-wrap items-center mt-1 text-zinc-400 text-xs sm:text-sm gap-2">
+                    <div className="flex flex-wrap items-center mt-1 text-zinc-400 text-xs sm:text-base gap-2 sm:gap-4">
                       <span className="flex items-center gap-1">
                         <svg
-                          className="w-4 h-4 text-purple-400"
+                          className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="2"
@@ -216,7 +216,7 @@ export default function DashboardMatches() {
                           <span className="mx-2 hidden sm:inline">•</span>
                           <span className="flex items-center gap-1">
                             <svg
-                              className="w-4 h-4 text-green-400"
+                              className="w-4 h-4 sm:w-5 sm:h-5 text-green-400"
                               fill="none"
                               stroke="currentColor"
                               strokeWidth="2"
@@ -237,20 +237,24 @@ export default function DashboardMatches() {
                   {job.summary}
                 </Text>
                 {job.reason && (
-                  <div className="mt-3 sm:mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-2.5 sm:px-4 py-2 sm:py-3 shadow-inner border border-purple-800 flex flex-col sm:flex-row items-start gap-2">
-                    {/* Desktop layout: icon, label, and reason in a row */}
-                    <div className="hidden sm:flex items-center gap-2">
-                      <svg
-                        className="w-5 h-5 text-purple-400 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
-                      </svg>
-                      <span className="font-semibold text-purple-200 text-base">Why this match:</span>
-                      <span className="ml-1 text-purple-100 text-base">{job.reason}</span>
+                  <div className="mt-3 sm:mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-2.5 sm:px-6 py-2 sm:py-4 shadow-inner border border-purple-800">
+                    {/* Desktop layout: icon, label, and reason in a row, with improved spacing and visual hierarchy */}
+                    <div className="hidden sm:flex items-start gap-4">
+                      <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full bg-purple-950/60 border border-purple-800 mr-2">
+                        <svg
+                          className="w-6 h-6 text-purple-300"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="font-bold text-purple-200 text-lg mb-1">Why this match</div>
+                        <div className="text-purple-100 text-base leading-relaxed">{job.reason}</div>
+                      </div>
                     </div>
                     {/* Mobile layout: icon and label in a row, reason below */}
                     <div className="flex sm:hidden flex-col w-full">
