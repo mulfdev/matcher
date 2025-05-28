@@ -171,14 +171,18 @@ export default function DashboardMatches() {
               </CardContent>
               <CardFooter className="border-t border-zinc-800 bg-zinc-900/60 flex justify-between items-center">
                 <div className="flex items-center space-x-2">
-                  <Button
-                    color="green"
+                  <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      feedbackMap[job.id] === true &&
-                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-green-500 scale-110',
-                      'transition-transform duration-150'
+                      "rounded-full p-3 transition-all duration-200 shadow-md border-2",
+                      "bg-gradient-to-tr from-green-500/80 via-green-400/80 to-emerald-400/80",
+                      "hover:from-green-400 hover:to-emerald-300 hover:scale-110",
+                      feedbackMap[job.id] === true
+                        ? "ring-4 ring-green-400 border-green-400 scale-110"
+                        : "border-transparent",
+                      submittingFeedbackFor === job.id && "opacity-60 cursor-not-allowed"
                     )}
+                    aria-label="Like"
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
@@ -193,16 +197,37 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
-                    <span className="text-lg">👍</span>
-                  </Button>
-                  <Button
-                    color="red"
+                    <svg
+                      className={clsx(
+                        "w-6 h-6",
+                        feedbackMap[job.id] === true
+                          ? "text-white drop-shadow"
+                          : "text-green-900"
+                      )}
+                      fill={feedbackMap[job.id] === true ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M14 9V5a3 3 0 0 0-6 0v4M5 15h14l-1.34 5.36A2 2 0 0 1 15.7 22H8.3a2 2 0 0 1-1.96-1.64L5 15zm0 0V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6"
+                      />
+                    </svg>
+                  </button>
+                  <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      feedbackMap[job.id] === false &&
-                        'ring-2 ring-offset-2 ring-offset-zinc-900 ring-red-500 scale-110',
-                      'transition-transform duration-150'
+                      "rounded-full p-3 transition-all duration-200 shadow-md border-2",
+                      "bg-gradient-to-tr from-rose-500/80 via-pink-400/80 to-red-400/80",
+                      "hover:from-rose-400 hover:to-red-300 hover:scale-110",
+                      feedbackMap[job.id] === false
+                        ? "ring-4 ring-rose-400 border-rose-400 scale-110"
+                        : "border-transparent",
+                      submittingFeedbackFor === job.id && "opacity-60 cursor-not-allowed"
                     )}
+                    aria-label="Dislike"
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
@@ -217,8 +242,25 @@ export default function DashboardMatches() {
                         });
                     }}
                   >
-                    <span className="text-lg">👎</span>
-                  </Button>
+                    <svg
+                      className={clsx(
+                        "w-6 h-6",
+                        feedbackMap[job.id] === false
+                          ? "text-white drop-shadow"
+                          : "text-rose-900"
+                      )}
+                      fill={feedbackMap[job.id] === false ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10 15v4a3 3 0 0 0 6 0v-4M19 9H5l1.34-5.36A2 2 0 0 1 8.3 2h7.4a2 2 0 0 1 1.96 1.64L19 9zm0 0v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9"
+                      />
+                    </svg>
+                  </button>
                 </div>
                 <Button color="indigo" className="font-semibold shadow-md hover:scale-105 transition-transform duration-150">
                   View Details
