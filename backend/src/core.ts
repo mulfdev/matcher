@@ -120,15 +120,15 @@ export async function llmJobMatch({
     jobs,
     maxResults = 7,
 }: {
-    userProfile: UserProfile,
+    userProfile: UserProfile;
     jobs: Array<{
         id: string;
         title: string;
         location?: string;
         compensation?: string;
         summary?: string;
-    }>,
-    maxResults?: number,
+    }>;
+    maxResults?: number;
 }) {
     // Compose a highly engineered and strict prompt for the LLM
     const prompt = `
@@ -176,9 +176,7 @@ ${JSON.stringify(jobs, null, 2)}
         },
         json: {
             model,
-            messages: [
-                { role: 'user', content: prompt }
-            ],
+            messages: [{ role: 'user', content: prompt }],
             temperature: 0.2,
             top_p: 0.9,
             frequency_penalty: 0.3,
@@ -195,14 +193,14 @@ ${JSON.stringify(jobs, null, 2)}
                             properties: {
                                 id: { type: 'string' },
                                 score: { type: 'number' },
-                                reason: { type: 'string' }
+                                reason: { type: 'string' },
                             },
                             required: ['id', 'score', 'reason'],
-                            additionalProperties: false
-                        }
-                    }
-                }
-            }
+                            additionalProperties: false,
+                        },
+                    },
+                },
+            },
         },
         responseType: 'json',
     });
@@ -227,7 +225,7 @@ ${JSON.stringify(jobs, null, 2)}
     const content = body?.choices?.[0]?.message?.content;
     if (!content) throw new Error('No response from LLM');
 
-    let results: Array<{ id: string, score: number, reason?: string }> = [];
+    let results: Array<{ id: string; score: number; reason?: string }> = [];
     try {
         results = JSON.parse(content);
     } catch (e) {
@@ -236,8 +234,6 @@ ${JSON.stringify(jobs, null, 2)}
     }
 
     // Only return jobs that exist in the input list, in order
-    const jobIds = new Set(jobs.map(j => j.id));
-    return results
-        .filter(r => jobIds.has(r.id))
-        .slice(0, maxResults);
+    const jobIds = new Set(jobs.map((j) => j.id));
+    return results.filter((r) => jobIds.has(r.id)).slice(0, maxResults);
 }
