@@ -93,18 +93,14 @@ export default function DashboardMatches() {
             <Text className="text-lg text-white font-semibold">
               You’ve reviewed all {MAX_TOTAL} job recommendations.
             </Text>
-            <Text className="text-zinc-400 mt-2">
-              Check back soon for more opportunities!
-            </Text>
+            <Text className="text-zinc-400 mt-2">Check back soon for more opportunities!</Text>
           </CardContent>
         </Card>
       ) : matches.length === 0 ? (
         <Card className="bg-gradient-to-r from-zinc-900/60 to-purple-900/40 border-purple-800 shadow-lg">
           <CardContent className="pt-6 flex flex-col items-center">
             <span className="text-4xl mb-2">🔍</span>
-            <Text className="text-lg text-white font-semibold">
-              No job matches found.
-            </Text>
+            <Text className="text-lg text-white font-semibold">No job matches found.</Text>
             <Text className="text-zinc-400 mt-2">
               Please complete your profile to get matched with jobs.
             </Text>
@@ -116,14 +112,14 @@ export default function DashboardMatches() {
             <Card
               key={job.id}
               className={clsx(
-                "overflow-hidden border-2 border-zinc-800 hover:border-purple-500 transition-colors duration-300 shadow-xl relative group",
-                "bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60"
+                'overflow-hidden border-2 border-zinc-800 hover:border-purple-500 transition-colors duration-300 shadow-xl relative group',
+                'bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60'
               )}
               style={{
                 boxShadow:
                   idx % 2 === 0
-                    ? "0 4px 32px 0 rgba(168,85,247,0.10)"
-                    : "0 4px 32px 0 rgba(99,102,241,0.10)",
+                    ? '0 4px 32px 0 rgba(168,85,247,0.10)'
+                    : '0 4px 32px 0 rgba(99,102,241,0.10)',
               }}
             >
               <div className="absolute right-0 top-0 m-4">
@@ -136,18 +132,41 @@ export default function DashboardMatches() {
                   <div>
                     <CardTitle className="text-2xl text-white font-bold flex items-center gap-2">
                       <span>{job.title}</span>
-                      <span className="text-purple-400">{job.similarity && job.similarity > 0 ? `• ${Math.round(job.similarity * 100)}%` : ""}</span>
+                      <span className="text-purple-400">
+                        {job.similarity && job.similarity > 0
+                          ? `• ${Math.round(job.similarity * 100)}%`
+                          : ''}
+                      </span>
                     </CardTitle>
                     <div className="flex items-center mt-1 text-zinc-400 text-sm gap-2">
                       <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 12.414a4 4 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414-1.414z"></path><path d="M15 11a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path></svg>
-                        {job.location || <span className="italic text-zinc-500">Remote / Flexible</span>}
+                        <svg
+                          className="w-4 h-4 text-purple-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M17.657 16.657L13.414 12.414a4 4 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414-1.414z"></path>
+                          <path d="M15 11a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path>
+                        </svg>
+                        {job.location || (
+                          <span className="italic text-zinc-500">Remote / Flexible</span>
+                        )}
                       </span>
                       {job.compensation && (
                         <>
                           <span className="mx-2">•</span>
                           <span className="flex items-center gap-1">
-                            <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
+                            <svg
+                              className="w-4 h-4 text-green-400"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              viewBox="0 0 24 24"
+                            >
+                              <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path>
+                            </svg>
                             {formatCompensation(job.compensation)}
                           </span>
                         </>
@@ -162,7 +181,15 @@ export default function DashboardMatches() {
                 </Text>
                 {job.reason && (
                   <div className="mt-4 rounded-lg bg-gradient-to-r from-purple-900/60 to-zinc-900/60 px-4 py-3 shadow-inner border border-purple-800 flex items-start gap-2">
-                    <svg className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path></svg>
+                    <svg
+                      className="w-5 h-5 text-purple-400 mt-0.5 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
+                    </svg>
                     <div>
                       <span className="font-semibold text-purple-200">Why this match:</span>
                       <span className="ml-1 text-purple-100">{job.reason}</span>
@@ -176,19 +203,23 @@ export default function DashboardMatches() {
                   <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      "relative rounded-full p-3 transition-all duration-200 shadow-xl border-2 group",
-                      "bg-gradient-to-br from-green-500/90 via-emerald-500/80 to-indigo-400/70",
-                      "hover:from-green-400 hover:to-indigo-300 hover:scale-110",
+                      'relative rounded-lg p-3 transition-all duration-200 group',
+                      'bg-gradient-to-br from-green-500/90 via-emerald-500/80 to-indigo-400/70',
+                      'hover:from-green-700 hover:to-indigo-300 hover:scale-110',
                       feedbackMap[job.id] === true
-                        ? "ring-4 ring-green-400 border-green-400 scale-110"
-                        : "border-transparent",
-                      submittingFeedbackFor === job.id && "opacity-60 cursor-not-allowed"
+                        ? 'ring-4 ring-green-400 border-green-400 scale-110'
+                        : 'border-transparent',
+                      submittingFeedbackFor === job.id && 'opacity-60 cursor-not-allowed'
                     )}
                     aria-label="Like"
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
-                      fetcher({ method: 'POST', url: '/match-job/feedback', body: { id: job.id, liked: true } })
+                      fetcher({
+                        method: 'POST',
+                        url: '/match-job/feedback',
+                        body: { id: job.id, liked: true },
+                      })
                         .catch((err) => {
                           console.error('Error submitting feedback:', err);
                           setError('Failed to submit feedback. Please try again.');
@@ -201,15 +232,17 @@ export default function DashboardMatches() {
                   >
                     <span className="absolute -top-2 -right-2">
                       {feedbackMap[job.id] === true && (
-                        <span className="inline-block animate-bounce text-green-300 text-lg">👍</span>
+                        <span className="inline-block animate-bounce text-green-300 text-lg">
+                          👍
+                        </span>
                       )}
                     </span>
                     <HandThumbUpIcon
                       className={clsx(
-                        "w-5.5 h-5.5",
+                        'w-5.5 h-5.5',
                         feedbackMap[job.id] === true
-                          ? "text-white"
-                          : "text-green-900 group-hover:text-white"
+                          ? 'text-white'
+                          : 'text-green-900 group-hover:text-white'
                       )}
                       aria-hidden="true"
                     />
@@ -218,19 +251,23 @@ export default function DashboardMatches() {
                   <button
                     disabled={submittingFeedbackFor === job.id}
                     className={clsx(
-                      "relative rounded-full p-3 transition-all duration-200 shadow-xl border-2 group",
-                      "bg-gradient-to-br from-rose-500/90 via-pink-500/80 to-indigo-400/70",
-                      "hover:from-rose-400 hover:to-indigo-300 hover:scale-110",
+                      'relative rounded-full p-3 transition-all duration-200 shadow-xl border-2 group',
+                      'bg-gradient-to-br from-rose-500/90 via-pink-500/80 to-indigo-400/70',
+                      'hover:from-rose-400 hover:to-indigo-300 hover:scale-110',
                       feedbackMap[job.id] === false
-                        ? "ring-4 ring-rose-400 border-rose-400 scale-110"
-                        : "border-transparent",
-                      submittingFeedbackFor === job.id && "opacity-60 cursor-not-allowed"
+                        ? 'ring-4 ring-rose-400 border-rose-400 scale-110'
+                        : 'border-transparent',
+                      submittingFeedbackFor === job.id && 'opacity-60 cursor-not-allowed'
                     )}
                     aria-label="Dislike"
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
-                      fetcher({ method: 'POST', url: '/match-job/feedback', body: { id: job.id, liked: false } })
+                      fetcher({
+                        method: 'POST',
+                        url: '/match-job/feedback',
+                        body: { id: job.id, liked: false },
+                      })
                         .catch((err) => {
                           console.error('Error submitting feedback:', err);
                           setError('Failed to submit feedback. Please try again.');
@@ -243,21 +280,26 @@ export default function DashboardMatches() {
                   >
                     <span className="absolute -top-2 -right-2">
                       {feedbackMap[job.id] === false && (
-                        <span className="inline-block animate-bounce text-rose-300 text-lg">👎</span>
+                        <span className="inline-block animate-bounce text-rose-300 text-lg">
+                          👎
+                        </span>
                       )}
                     </span>
                     <HandThumbDownIcon
                       className={clsx(
-                        "w-5.5 h-5.5",
+                        'w-5.5 h-5.5',
                         feedbackMap[job.id] === false
-                          ? "text-white"
-                          : "text-rose-900 group-hover:text-white"
+                          ? 'text-white'
+                          : 'text-rose-900 group-hover:text-white'
                       )}
                       aria-hidden="true"
                     />
                   </button>
                 </div>
-                <Button color="indigo" className="font-semibold shadow-md hover:scale-105 transition-transform duration-150">
+                <Button
+                  color="indigo"
+                  className="font-semibold shadow-md hover:scale-105 transition-transform duration-150"
+                >
                   View Details
                 </Button>
               </CardFooter>
