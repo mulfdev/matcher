@@ -29,7 +29,6 @@ const app = Fastify({
 const store = new ConnectSessionKnexStore({
     knex: db,
     tableName: 'sessions',
-    debug: true,
 });
 
 app.register(cookie);
