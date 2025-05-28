@@ -206,7 +206,8 @@ export default function DashboardMatches() {
                     </span>
                     <HandThumbUpIcon
                       className={clsx(
-                        "w-5.5 h-5.5 drop-shadow-lg", // ~21% smaller than w-7 h-7 (w-7 = 1.75rem, w-5.5 = 1.375rem)
+                        "w-5.5 h-5.5", // ~21% smaller than w-7 h-7 (w-7 = 1.75rem, w-5.5 = 1.375rem)
+                        "filter drop-shadow-[0_2px_6px_rgba(16,185,129,0.35)]", // custom shadow, softer and more circular
                         feedbackMap[job.id] === true
                           ? "text-white"
                           : "text-green-900 group-hover:text-white"
@@ -248,7 +249,8 @@ export default function DashboardMatches() {
                     </span>
                     <HandThumbDownIcon
                       className={clsx(
-                        "w-5.5 h-5.5 drop-shadow-lg", // ~21% smaller than w-7 h-7
+                        "w-5.5 h-5.5",
+                        "filter drop-shadow-[0_2px_6px_rgba(244,63,94,0.32)]", // custom shadow, softer and more circular
                         feedbackMap[job.id] === false
                           ? "text-white"
                           : "text-rose-900 group-hover:text-white"
