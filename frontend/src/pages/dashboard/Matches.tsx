@@ -81,7 +81,9 @@ export default function DashboardMatches() {
   const [submittingFeedbackFor, setSubmittingFeedbackFor] = useState<string | null>(null);
   const [feedbackMap, setFeedbackMap] = useState<Record<string, boolean>>({});
   const [totalRated, setTotalRated] = useState(0);
-  const [hoveredThumb, setHoveredThumb] = useState<{ id: string; type: 'up' | 'down' } | null>(null);
+  const [hoveredThumb, setHoveredThumb] = useState<{ id: string; type: 'up' | 'down' } | null>(
+    null
+  );
   const MAX_TOTAL = 21;
 
   const fetchMatches = async () => {
@@ -187,7 +189,7 @@ export default function DashboardMatches() {
               <CardHeader className="pb-2">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                   <div className="w-full">
-                    <CardTitle className="text-lg sm:text-3xl text-white font-extrabold flex items-center gap-2 sm:gap-4">
+                    <CardTitle className="text-lg sm:text-2xl text-white font-extrabold flex items-center gap-2 sm:gap-4">
                       <span>{job.title}</span>
                       <span className="text-purple-400 text-base sm:text-xl font-semibold">
                         {job.similarity && job.similarity > 0
@@ -253,7 +255,9 @@ export default function DashboardMatches() {
                       </div>
                       <div>
                         <div className="font-bold text-purple-200 text-lg mb-1">Why this match</div>
-                        <div className="text-purple-100 text-base leading-relaxed">{job.reason}</div>
+                        <div className="text-purple-100 text-base leading-relaxed">
+                          {job.reason}
+                        </div>
                       </div>
                     </div>
                     {/* Mobile layout: icon and label in a row, reason below */}
@@ -268,7 +272,9 @@ export default function DashboardMatches() {
                         >
                           <path d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"></path>
                         </svg>
-                        <span className="font-semibold text-purple-200 text-sm">Why this match:</span>
+                        <span className="font-semibold text-purple-200 text-sm">
+                          Why this match:
+                        </span>
                       </div>
                       <span className="text-purple-100 text-sm">{job.reason}</span>
                     </div>
@@ -315,7 +321,7 @@ export default function DashboardMatches() {
                         'w-5 h-5 sm:w-5.5 sm:h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === true
                           ? 'text-white'
-                          : (hoveredThumb?.id === job.id && hoveredThumb?.type === 'up')
+                          : hoveredThumb?.id === job.id && hoveredThumb?.type === 'up'
                             ? 'text-white'
                             : 'text-green-900'
                       )}
@@ -360,7 +366,7 @@ export default function DashboardMatches() {
                         'w-5 h-5 sm:w-5.5 sm:h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === false
                           ? 'text-white'
-                          : (hoveredThumb?.id === job.id && hoveredThumb?.type === 'down')
+                          : hoveredThumb?.id === job.id && hoveredThumb?.type === 'down'
                             ? 'text-white'
                             : 'text-rose-900'
                       )}
