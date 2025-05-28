@@ -11,7 +11,8 @@ interface JobMatch {
   location: string;
   compensation: string;
   summary: string;
-  similarity: number;
+  reason?: string;
+  similarity?: number;
 }
 
 interface MatchResponse {
@@ -118,6 +119,11 @@ export default function DashboardMatches() {
               </CardHeader>
               <CardContent>
                 <Text className="line-clamp-3 text-zinc-300">{job.summary}</Text>
+                {job.reason && (
+                  <div className="mt-2 text-sm text-purple-300">
+                    <span className="font-semibold">Why this match:</span> {job.reason}
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="border-t border-zinc-800 bg-zinc-900/50 flex justify-between">
                 <div className="flex items-center space-x-2">
