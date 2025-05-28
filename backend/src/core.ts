@@ -175,12 +175,6 @@ ${JSON.stringify(userProfile, null, 2)}
 
 Job Postings:
 ${JSON.stringify(jobs, null, 2)}
-
-Respond ONLY in the following JSON format:
-[
-  { "id": "<job_id>", "score": <number>, "reason": "<short explanation>" }
-]
-Return at most ${maxResults} results.
 `;
 
     const model = 'google/gemini-2.5-flash-preview-05-20';
@@ -200,6 +194,26 @@ Return at most ${maxResults} results.
             top_p: 0.9,
             frequency_penalty: 0.3,
             presence_penalty: 0,
+            response_format: {
+                type: 'json_schema',
+                json_schema: {
+                    name: 'job_match',
+                    strict: true,
+                    schema: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                id: { type: 'string' },
+                                score: { type: 'number' },
+                                reason: { type: 'string' }
+                            },
+                            required: ['id', 'score', 'reason'],
+                            additionalProperties: false
+                        }
+                    }
+                }
+            }
         },
         responseType: 'json',
         signal: effectiveSignal,
