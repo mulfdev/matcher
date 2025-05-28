@@ -109,7 +109,7 @@ export async function llm({ base64Images }: LlmParams) {
  * Use LLM to match a user profile to a list of jobs.
  * Returns jobs ranked by LLM's assessment of fit.
  */
-let llmJobMatchInFlight: Promise<any> | null = null;
+let llmJobMatchInFlight: Promise<unknown> | null = null;
 
 /**
  * Use LLM to match a user profile to a list of jobs.
@@ -121,13 +121,13 @@ export async function llmJobMatch({
     maxResults = 7,
 }: {
     userProfile: UserProfile;
-    jobs: Array<{
+    jobs: {
         id: string;
         title: string;
         location?: string;
         compensation?: string;
         summary?: string;
-    }>;
+    }[];
     maxResults?: number;
 }) {
     // Compose a highly engineered and strict prompt for the LLM
@@ -205,35 +205,44 @@ ${JSON.stringify(jobs, null, 2)}
         responseType: 'json',
     });
 
-    let response;
+    let response: unknown;
     try {
         response = await llmJobMatchInFlight;
-    } catch (err: any) {
-        throw err;
     } finally {
         llmJobMatchInFlight = null;
     }
 
-    const body = response.body as {
-        choices?: {
-            message?: {
-                content?: string;
-            };
-        }[];
-    };
+    // Type guard for response
+    if (
+        typeof response === 'object' &&
+        response !== null &&
+        'body' in response &&
+        typeof (response as { body: unknown }).body === 'object'
+    ) {
+        const body = (response as { body: unknown }).body as {
+            choices?: {
+                message?: {
+                    content?: string | null;
+                };
+            }[];
+        };
 
-    const content = body?.choices?.[0]?.message?.content;
-    if (!content) throw new Error('No response from LLM');
+        const content = body?.choices?.[0]?.message?.content;
+        if (typeof content !== 'string' || !content) {
+            throw new Error('No response from LLM');
+        }
 
-    let results: Array<{ id: string; score: number; reason?: string }> = [];
-    try {
-        results = JSON.parse(content);
-    } catch (e) {
-        console.error('Failed to parse LLM job match response. Raw content:', content);
-        throw new Error('Failed to parse LLM job match response');
+        let results: { id: string; score: number; reason?: string }[] = [];
+        try {
+            results = JSON.parse(content) as { id: string; score: number; reason?: string }[];
+        } catch {
+            console.error('Failed to parse LLM job match response. Raw content:', content);
+            throw new Error('Failed to parse LLM job match response');
+        }
+
+        // Only return jobs that exist in the input list, in order
+        const jobIds = new Set(jobs.map((j) => j.id));
+        return results.filter((r) => jobIds.has(r.id)).slice(0, maxResults);
     }
-
-    // Only return jobs that exist in the input list, in order
-    const jobIds = new Set(jobs.map((j) => j.id));
-    return results.filter((r) => jobIds.has(r.id)).slice(0, maxResults);
+    throw new Error('Unexpected response format from LLM');
 }

@@ -4,9 +4,7 @@ import assert from 'assert';
 import {
     db,
     embedder,
-    ensureNumericVector,
     llm,
-    weightedVectorCombine,
     type MessageContent,
 } from '../core.js';
 import { OAuth2Client } from 'google-auth-library';
@@ -15,7 +13,7 @@ import { join } from 'path';
 import { createWriteStream, existsSync, mkdirSync } from 'fs';
 import { pipeline } from 'stream/promises';
 import { readdir, readFile, rm } from 'fs/promises';
-import type { SimilarityResult, JobFeedbackBody } from '../../types.js';
+import type { JobFeedbackBody } from '../../types.js';
 import { jobFeedbackSchema } from '../routeSchema.js';
 import { Poppler } from 'node-poppler';
 
@@ -313,10 +311,12 @@ export function apiRoutes(api: FastifyInstance) {
 
         // Fix: Ensure all required fields are present and types are correct
         const jobs = jobsRaw
-            .filter(j => typeof j.id === 'string' && typeof j.title === 'string')
+            .filter((j): j is { id: string; title: string; location?: string; compensation?: string; summary?: string } =>
+                typeof j.id === 'string' && typeof j.title === 'string'
+            )
             .map(j => ({
                 id: j.id,
-                title: j.title as string,
+                title: j.title!,
                 location: j.location ?? undefined,
                 compensation: j.compensation ?? undefined,
                 summary: j.summary ?? undefined,
@@ -332,14 +332,14 @@ export function apiRoutes(api: FastifyInstance) {
 
             // Attach job details and reasons
             const jobMap = Object.fromEntries(jobs.map(j => [j.id, j]));
-            const results = ranked.map(r => ({
+            const results = ranked.map((r: { id: string; score: number; reason?: string }) => ({
                 ...jobMap[r.id],
                 score: r.score,
                 reason: r.reason,
             }));
 
             return { results };
-        } catch (e: any) {
+        } catch (e) {
             console.error('LLM job match error:', e);
             return res.status(500).send({ error: 'Failed to match jobs' });
         }
