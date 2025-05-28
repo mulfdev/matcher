@@ -27,6 +27,7 @@ export default function DashboardMatches() {
   const [submittingFeedbackFor, setSubmittingFeedbackFor] = useState<string | null>(null);
   const [feedbackMap, setFeedbackMap] = useState<Record<string, boolean>>({});
   const [totalRated, setTotalRated] = useState(0);
+  const [hoveredThumb, setHoveredThumb] = useState<{ id: string; type: 'up' | 'down' } | null>(null);
   const MAX_TOTAL = 21;
 
   const fetchMatches = async () => {
@@ -212,8 +213,8 @@ export default function DashboardMatches() {
                       submittingFeedbackFor === job.id && 'opacity-60 cursor-not-allowed'
                     )}
                     aria-label="Like"
-                    onMouseEnter={e => e.currentTarget.classList.add('z-10')}
-                    onMouseLeave={e => e.currentTarget.classList.remove('z-10')}
+                    onMouseEnter={() => setHoveredThumb({ id: job.id, type: 'up' })}
+                    onMouseLeave={() => setHoveredThumb(null)}
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
@@ -237,8 +238,9 @@ export default function DashboardMatches() {
                         'w-5.5 h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === true
                           ? 'text-white'
-                          : 'text-green-900',
-                        'group-hover:text-white'
+                          : (hoveredThumb?.id === job.id && hoveredThumb?.type === 'up')
+                            ? 'text-white'
+                            : 'text-green-900'
                       )}
                       aria-hidden="true"
                     />
@@ -256,8 +258,8 @@ export default function DashboardMatches() {
                       submittingFeedbackFor === job.id && 'opacity-60 cursor-not-allowed'
                     )}
                     aria-label="Dislike"
-                    onMouseEnter={e => e.currentTarget.classList.add('z-10')}
-                    onMouseLeave={e => e.currentTarget.classList.remove('z-10')}
+                    onMouseEnter={() => setHoveredThumb({ id: job.id, type: 'down' })}
+                    onMouseLeave={() => setHoveredThumb(null)}
                     onClick={() => {
                       setError(null);
                       setSubmittingFeedbackFor(job.id);
@@ -281,8 +283,9 @@ export default function DashboardMatches() {
                         'w-5.5 h-5.5 transition-colors duration-150',
                         feedbackMap[job.id] === false
                           ? 'text-white'
-                          : 'text-rose-900',
-                        'group-hover:text-white'
+                          : (hoveredThumb?.id === job.id && hoveredThumb?.type === 'down')
+                            ? 'text-white'
+                            : 'text-rose-900'
                       )}
                       aria-hidden="true"
                     />
