@@ -40,11 +40,9 @@ export default function DashboardLayout() {
         <Navbar>
           <NavbarSection className="max-lg:hidden">
             {navItems.map(({ label, url }) => (
-              <NavLink to={url}>
-                <NavbarItem key={label} href={url}>
-                  {label}
-                </NavbarItem>
-              </NavLink>
+              <NavbarItem key={label} as={NavLink} to={url}>
+                {label}
+              </NavbarItem>
             ))}
           </NavbarSection>
           <NavbarSpacer />
