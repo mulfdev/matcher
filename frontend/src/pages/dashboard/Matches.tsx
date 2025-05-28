@@ -3,6 +3,7 @@ import { fetcher } from '~/core';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '~/components/card';
 import { Text } from '~/components/text';
 import { Button } from '~/components/button';
+import { HandThumbUpIcon, HandThumbDownIcon } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
 
 interface JobMatch {
@@ -203,24 +204,15 @@ export default function DashboardMatches() {
                         <span className="inline-block animate-bounce text-green-300 text-lg">👍</span>
                       )}
                     </span>
-                    <svg
+                    <HandThumbUpIcon
                       className={clsx(
                         "w-7 h-7 drop-shadow-lg",
                         feedbackMap[job.id] === true
                           ? "text-white"
                           : "text-green-900 group-hover:text-white"
                       )}
-                      fill={feedbackMap[job.id] === true ? "currentColor" : "none"}
-                      stroke="currentColor"
-                      strokeWidth={2.2}
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M14 9V5a3 3 0 0 0-6 0v4M5 15h14l-1.34 5.36A2 2 0 0 1 15.7 22H8.3a2 2 0 0 1-1.96-1.64L5 15zm0 0V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6"
-                      />
-                    </svg>
+                      aria-hidden="true"
+                    />
                   </button>
                   {/* Thumbs Down Button */}
                   <button
@@ -254,24 +246,15 @@ export default function DashboardMatches() {
                         <span className="inline-block animate-bounce text-rose-300 text-lg">👎</span>
                       )}
                     </span>
-                    <svg
+                    <HandThumbDownIcon
                       className={clsx(
                         "w-7 h-7 drop-shadow-lg",
                         feedbackMap[job.id] === false
                           ? "text-white"
                           : "text-rose-900 group-hover:text-white"
                       )}
-                      fill={feedbackMap[job.id] === false ? "currentColor" : "none"}
-                      stroke="currentColor"
-                      strokeWidth={2.2}
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M10 15v4a3 3 0 0 0 6 0v-4M19 9H5l1.34-5.36A2 2 0 0 1 8.3 2h7.4a2 2 0 0 1 1.96 1.64L19 9zm0 0v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9"
-                      />
-                    </svg>
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
                 <Button color="indigo" className="font-semibold shadow-md hover:scale-105 transition-transform duration-150">
