@@ -9,13 +9,14 @@ import { fetcher } from '~/core';
 import { ResumeData } from '~/types';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/card';
 import { Button } from '~/components/button';
-import clsx from 'clsx';
+import { useNavigate } from 'react-router';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+
   const [files, setFiles] = useState<File[] | null>(null);
   const [uploading, setUploading] = useState(false);
   const [processed, setProcessed] = useState(false);
-  const [data, setData] = useState<ResumeData | null>(null);
   const [profile, setProfile] = useState<ResumeData | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,11 +29,9 @@ export default function Dashboard() {
         const res = await fetcher<{ data: ResumeData }>({ url: '/profile' });
         setProfile(res.data);
         setProcessed(true);
-        setData(res.data);
-      } catch (e) {
+      } catch {
         setProfile(null);
         setProcessed(false);
-        setData(null);
       } finally {
         setLoadingProfile(false);
       }
@@ -57,8 +56,8 @@ export default function Dashboard() {
         body: formData,
       });
       setProcessed(true);
-      setData(res.data);
       setProfile(res.data);
+      navigate('/dashboard/matches');
     } catch (error) {
       if (error instanceof Error) {
         setError('Upload error: ' + error.message);
@@ -92,11 +91,6 @@ export default function Dashboard() {
     setFiles(null);
   };
 
-  // Format years of experience
-  const formatYears = (years: number) =>
-    years === 1 ? '1 year' : `${years} years`;
-
-  // Main render
   return (
     <div className="max-w-4xl mx-auto p-2 md:p-6">
       {loadingProfile ? (
@@ -173,12 +167,12 @@ export default function Dashboard() {
           {files && files.length > 0 && (
             <div className="mt-6 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-white font-medium">Selected Files</h3>
+                <h3 className="text-white font-medium">Selected File</h3>
                 <button
                   onClick={() => setFiles(null)}
                   className="text-gray-400 hover:text-white text-sm"
                 >
-                  Clear all
+                  Clear
                 </button>
               </div>
               <ul className="space-y-2">
@@ -202,9 +196,7 @@ export default function Dashboard() {
               </ul>
             </div>
           )}
-          {error && (
-            <div className="mt-4 text-red-400 font-semibold">{error}</div>
-          )}
+          {error && <div className="mt-4 text-red-400 font-semibold">{error}</div>}
         </div>
       ) : profile ? (
         <div>
@@ -253,7 +245,6 @@ export default function Dashboard() {
                       setProcessed(false);
                       setFiles(null);
                       setProfile(null);
-                      setData(null);
                     }}
                   >
                     Click here to upload a new one.
