@@ -109,19 +109,16 @@ export async function llm({ base64Images }: LlmParams) {
  * Use LLM to match a user profile to a list of jobs.
  * Returns jobs ranked by LLM's assessment of fit.
  */
-let llmJobMatchAbortController: AbortController | null = null;
 let llmJobMatchInFlight: Promise<any> | null = null;
 
 /**
  * Use LLM to match a user profile to a list of jobs.
- * Ensures only one request is in flight at a time; aborts any previous request.
  * Returns jobs ranked by LLM's assessment of fit.
  */
 export async function llmJobMatch({
     userProfile,
     jobs,
     maxResults = 7,
-    signal,
 }: {
     userProfile: UserProfile,
     jobs: Array<{
@@ -132,15 +129,7 @@ export async function llmJobMatch({
         summary?: string;
     }>,
     maxResults?: number,
-    signal?: AbortSignal,
 }) {
-    // Abort any previous in-flight request
-    if (llmJobMatchAbortController) {
-        llmJobMatchAbortController.abort();
-    }
-    llmJobMatchAbortController = new AbortController();
-    const effectiveSignal = signal ?? llmJobMatchAbortController.signal;
-
     // Compose a highly engineered and strict prompt for the LLM
     const prompt = `
 You are a world-class AI career coach and job-matching expert. Your mission is to act as a hyper-analytical, unbiased, and insightful recommender system for job seekers. Given a user's detailed profile and a set of job postings, you must identify and rank ONLY the jobs that are a strong, clear match for this user.
@@ -216,20 +205,15 @@ ${JSON.stringify(jobs, null, 2)}
             }
         },
         responseType: 'json',
-        signal: effectiveSignal,
     });
 
     let response;
     try {
         response = await llmJobMatchInFlight;
     } catch (err: any) {
-        if (err.name === 'AbortError') {
-            throw new Error('Previous LLM job match request aborted');
-        }
         throw err;
     } finally {
         llmJobMatchInFlight = null;
-        llmJobMatchAbortController = null;
     }
 
     const body = response.body as {
