@@ -43,10 +43,6 @@ app.register(fastifySession, {
     },
     saveUninitialized: false,
 });
-app.register(cors, {
-    origin: ['https://matcher.pages.dev', 'http://localhost:5173'],
-    credentials: true,
-});
 
 app.register(fastifyMultipart, {
     limits: {
