@@ -309,9 +309,24 @@ export function apiRoutes(api: FastifyInstance) {
             }
         }
 
-        const refinedVec = vectors[0].map((_, i) =>
-            vectors.reduce((sum, v) => sum + v[i], 0) / vectors.length
-        );
+        const [firstVec] = vectors;
+        if (!firstVec) {
+            throw new Error('No vectors available for matching');
+        }
+        const refinedVec: number[] = [];
+        const dim = firstVec.length;
+        for (let i = 0; i < dim; i++) {
+            let sum = 0;
+            for (const v of vectors) {
+                if (i >= v.length) {
+                    throw new Error(
+                        `Mismatch in vector dimensions: expected ${dim}, got ${v.length}`
+                    );
+                }
+                sum += v[i] ?? 0;
+            }
+            refinedVec.push(sum / vectors.length);
+        }
 
         let query = db<SimilarityResult>('job_postings_details')
             .select(
@@ -328,14 +343,17 @@ export function apiRoutes(api: FastifyInstance) {
             .limit(7);
 
         if (feedbacks.length > 0) {
-            query = query.whereNotIn('id', feedbacks.map((f) => f.job_id));
+            query = query.whereNotIn(
+                'id',
+                feedbacks.map((f) => f.job_id)
+            );
         }
 
         const results = await query;
         return { results };
     });
 
-    api.post(
+    api.post<{ Body: JobFeedbackBody }>(
         '/match-job/feedback',
         {
             schema: { body: jobFeedbackSchema },
@@ -347,7 +365,7 @@ export function apiRoutes(api: FastifyInstance) {
                 done();
             },
         },
-        async (req: FastifyRequest<{ Body: JobFeedbackBody }>, res) => {
+        async (req, res) => {
             const { id, liked } = req.body;
             const jobId = parseInt(id, 10);
             await db('user_job_feedback')
