@@ -26,7 +26,8 @@ function MatchesSkeletonCard() {
       className={clsx(
         'overflow-hidden border-2 border-zinc-800 shadow-xl relative group',
         'bg-gradient-to-br from-zinc-900/80 via-zinc-950/90 to-purple-950/60',
-        'animate-pulse'
+        'animate-pulse',
+        'rounded-2xl' // Match the card's rounded corners
       )}
       style={{
         boxShadow: '0 4px 32px 0 rgba(168,85,247,0.10)',
