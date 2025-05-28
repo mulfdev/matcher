@@ -180,8 +180,15 @@ Return at most ${maxResults} results.
 
     let results: Array<{ id: string, score: number, reason?: string }> = [];
     try {
-        results = JSON.parse(content);
+        // Try to find the first JSON array in the response, even if the LLM added text before/after
+        const match = content.match(/\[\s*{[\s\S]*?}\s*\]/);
+        if (match) {
+            results = JSON.parse(match[0]);
+        } else {
+            results = JSON.parse(content);
+        }
     } catch (e) {
+        console.error('Failed to parse LLM job match response. Raw content:', content);
         throw new Error('Failed to parse LLM job match response');
     }
 
