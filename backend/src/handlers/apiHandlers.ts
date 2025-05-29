@@ -17,7 +17,7 @@ interface GoogleCallbackQuery {
 }
 
 export function apiRoutes(api: FastifyInstance) {
-    const { GOOGLE_CLIENT_ID, BASE_URL, GOOGLE_CLIENT_SECRET, NODE_ENV } = process.env;
+    const { GOOGLE_CLIENT_ID, BASE_URL, GOOGLE_CLIENT_SECRET } = process.env;
 
     assert(typeof GOOGLE_CLIENT_ID === 'string', 'GOOGLE_CLIENT_ID must be defined');
     assert(typeof BASE_URL === 'string', 'BASE_URL must be set');
@@ -110,11 +110,7 @@ export function apiRoutes(api: FastifyInstance) {
                 req.session.name = user.name;
                 await req.session.save();
 
-                if (NODE_ENV === 'production') {
-                    res.redirect(`/dashboard`);
-                }
-
-                res.redirect('http://localhost:5173/dashboard');
+                res.redirect(`${BASE_URL}/dashboard`);
             } catch (e) {
                 console.log(e);
                 res.status(500).send('OAuth callback error');
