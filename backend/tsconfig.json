@@ -20,8 +20,6 @@
   "include": [
     "src/**/*",
     "*.d.ts",
-    "knexfile.js",
-    "migrations/**/*"
   ],
   "exclude": [
     "node_modules",
