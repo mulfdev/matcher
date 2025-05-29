@@ -4,6 +4,7 @@ FROM node:${NODE_VERSION}-slim AS base
 
 WORKDIR /app
 ENV NODE_ENV="production"
+ENV BASE_URL="https://backend-bold-glade-2217.fly.dev"
 
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3 poppler-utils && \
