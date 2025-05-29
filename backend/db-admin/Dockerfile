@@ -10,5 +10,5 @@ ENV PGUSER=postgres.zpdtjvlltxlfrzeicete
 # It's recommended to pass PGPASSWORD at runtime for security reasons
 
 # Set the default command to run when the container starts
-CMD ["bash", "-c", "pg_dump --no-owner --no-privileges --format=custom -t public.job_postings_details --file=/backup/backup.dump"]
+CMD ["bash", "-c", "pg_dump --no-owner --no-privileges --format=custom -t public.job_postings_details -t public.job_postings --file=/backup/backup.dump"]
 
