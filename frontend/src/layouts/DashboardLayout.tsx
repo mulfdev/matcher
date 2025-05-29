@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router';
+import { Outlet, useNavigate } from 'react-router';
 import { Avatar } from '~/components/avatar';
 import {
   Dropdown,
@@ -19,9 +19,6 @@ import {
 import { StackedLayout } from '~/components/stacked-layout';
 
 import ArrowRightStartOnRectangleIcon from '@heroicons/react/16/solid/ArrowRightStartOnRectangleIcon';
-import Cog8ToothIcon from '@heroicons/react/16/solid/Cog8ToothIcon';
-import LightBulbIcon from '@heroicons/react/16/solid/LightBulbIcon';
-import ShieldCheckIcon from '@heroicons/react/16/solid/ShieldCheckIcon';
 import UserIcon from '@heroicons/react/16/solid/UserIcon';
 
 import { fetcher } from '~/core';
@@ -56,19 +53,7 @@ export default function DashboardLayout() {
                   <UserIcon />
                   <DropdownLabel>My profile</DropdownLabel>
                 </DropdownItem>
-                <DropdownItem href="/settings">
-                  <Cog8ToothIcon />
-                  <DropdownLabel>Settings</DropdownLabel>
-                </DropdownItem>
-                <DropdownDivider />
-                <DropdownItem href="/privacy-policy">
-                  <ShieldCheckIcon />
-                  <DropdownLabel>Privacy policy</DropdownLabel>
-                </DropdownItem>
-                <DropdownItem href="/share-feedback">
-                  <LightBulbIcon />
-                  <DropdownLabel>Share feedback</DropdownLabel>
-                </DropdownItem>
+
                 <DropdownDivider />
                 <DropdownItem>
                   <ArrowRightStartOnRectangleIcon />
