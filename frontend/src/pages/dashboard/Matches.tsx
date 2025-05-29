@@ -14,6 +14,7 @@ interface JobMatch {
   summary: string;
   reason?: string;
   similarity?: number;
+  posting_url: string;
 }
 
 interface MatchResponse {
@@ -375,6 +376,7 @@ export default function DashboardMatches() {
                   </button>
                 </div>
                 <Button
+                  href={job.posting_url}
                   color="indigo"
                   className="w-full sm:w-auto font-semibold shadow-md hover:scale-105 transition-transform duration-150"
                 >
