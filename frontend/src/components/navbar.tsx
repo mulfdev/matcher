@@ -73,12 +73,7 @@ export const NavbarItem = forwardRef(function NavbarItem(
         />
       )}
       {'href' in props ? (
-        <Link
-          {...props}
-          className={classes}
-          data-current={current ? 'true' : undefined}
-          ref={ref as React.ForwardedRef<HTMLAnchorElement>}
-        >
+        <Link {...props} className={classes} data-current={current ? 'true' : undefined}>
           <TouchTarget>{children}</TouchTarget>
         </Link>
       ) : (
