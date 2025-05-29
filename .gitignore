@@ -1,4 +1,5 @@
 node_modules/
+CONVENTIONS.md
 .aider.*
 dist/
 .aider*
