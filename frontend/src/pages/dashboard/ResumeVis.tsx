@@ -40,7 +40,6 @@ export default function ResumeVisualization({ data, isLoading = false }: ResumeV
   return (
     <div className="w-full">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-3">Resume Analysis</h1>
         <div className="flex flex-wrap gap-2 mb-4">
           <Badge color="emerald">
             {data.category
