@@ -1,7 +1,6 @@
-import type { Knex } from 'knex';
 import 'dotenv/config';
 
-const config: Knex.Config = {
+const config = {
     client: 'pg',
     connection: process.env.DATABASE_URL,
     migrations: {
