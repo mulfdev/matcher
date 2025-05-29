@@ -351,7 +351,7 @@ export function apiRoutes(api: FastifyInstance) {
                 } catch (e) {
                     const error = e as Error;
                     console.warn(
-                        `Could not parse embedding for liked job ID ${job.id || 'unknown'}: ${error.message}`
+                        `Could not parse embedding for liked job ID ${job.id ?? 'unknown'}: ${error.message}`
                     );
                 }
             }
@@ -415,12 +415,14 @@ export function apiRoutes(api: FastifyInstance) {
                 'j.location',
                 'j.compensation',
                 'j.summary AS job_summary',
+                'job_postings.posting_url',
                 // Use the final (potentially preference-adjusted) user embeddings for distance calculation
                 db.raw(
                     `(${SUMMARY_QUERY_WEIGHT} * (j.summary_embedding <-> ${finalUserSummaryEmbeddingSql})) + (${SKILL_QUERY_WEIGHT} * (j.skill_embedding <-> ${finalUserSkillEmbeddingSql})) AS distance`
                 )
             )
             .from('job_postings_details AS j')
+            .innerJoin('job_postings', 'j.id', 'job_postings.id')
             .whereNotIn('j.id', excludedJobIds)
             .whereNotNull('j.summary_embedding')
             .whereNotNull('j.skill_embedding')
@@ -466,10 +468,20 @@ export function apiRoutes(api: FastifyInstance) {
                         );
                         return null;
                     }
-                    return { ...jobDetails, score: rankedJob.score, reason: rankedJob.reason };
+
+                    // FIXME: the wrong link is being sent!
+
+                    const lookup = jobsRaw.find((job) => job.id === rankedJob.id);
+                    return {
+                        ...jobDetails,
+                        score: rankedJob.score,
+                        reason: rankedJob.reason,
+                        posting_url: lookup.posting_url,
+                    };
                 })
                 .filter((job) => job !== null); // Remove any nulls if a job ID wasn't found
 
+            console.log(results);
             return { results };
         } catch (e) {
             const error = e as Error;
