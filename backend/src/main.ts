@@ -68,10 +68,21 @@ if (NODE_ENV === 'production') {
     const __dirname = dirname(__filename);
 
     const clientDistPath = join(__dirname, '..', 'client');
+
     console.log(`Production mode: Static assets served from: ${clientDistPath}`);
 
     app.register(fastifyStatic, {
         root: clientDistPath,
+        prefix: '/',
+        wildcard: false,
+        cacheControl: false,
+        setHeaders: (res, path) => {
+            if (/\.(js|css|woff2?|ttf|eot|png|jpg|jpeg|gif|svg)$/.test(path)) {
+                res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            } else {
+                res.setHeader('Cache-Control', 'no-cache');
+            }
+        },
     });
 
     app.setNotFoundHandler((_, res) => {
