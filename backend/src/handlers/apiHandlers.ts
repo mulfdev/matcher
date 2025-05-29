@@ -59,7 +59,7 @@ function averageEmbeddings(embeddings: number[][]): number[] | null {
 }
 
 export function apiRoutes(api: FastifyInstance) {
-    const { GOOGLE_CLIENT_ID, BASE_URL, GOOGLE_CLIENT_SECRET } = process.env;
+    const { GOOGLE_CLIENT_ID, BASE_URL, GOOGLE_CLIENT_SECRET, NODE_ENV } = process.env;
 
     assert(typeof GOOGLE_CLIENT_ID === 'string', 'GOOGLE_CLIENT_ID must be defined');
     assert(typeof BASE_URL === 'string', 'BASE_URL must be set');
@@ -137,7 +137,12 @@ export function apiRoutes(api: FastifyInstance) {
                 req.session.email = user.email;
                 req.session.name = user.name;
                 await req.session.save();
-                res.redirect(`${BASE_URL}/dashboard`);
+
+                if (NODE_ENV === 'production') {
+                    res.redirect(`${BASE_URL}/dashboard`);
+                } else {
+                    res.redirect('http://localhost:5173/dashboard');
+                }
             } catch (e) {
                 console.log(e);
                 res.status(500).send('OAuth callback error');
@@ -501,22 +506,28 @@ export function apiRoutes(api: FastifyInstance) {
 
     api.get('/match-job/liked', async (req, res) => {
         if (!req.session.userId) return res.status(401).send({ error: 'Not authenticated' });
-        const likedJobs = await db('job_postings_details')
-            .select(
-                'job_postings_details.id',
-                'title',
-                'location',
-                'compensation',
-                'job_postings_details.summary'
-            )
-            .join(
-                'user_job_feedback',
-                'job_postings_details.id',
-                db.raw('user_job_feedback.job_id::text')
-            )
-            .where('user_job_feedback.user_id', req.session.userId)
-            .andWhere('user_job_feedback.liked', true);
-        return { results: likedJobs };
+        try {
+            const likedFeedback = await db('user_job_feedback')
+                .select('job_id')
+                .where('user_id', req.session.userId)
+                .andWhere('liked', true);
+
+            if (!likedFeedback || likedFeedback.length === 0) {
+                return { results: [] }; // No liked jobs
+            }
+
+            const likedJobIds = likedFeedback.map((f) => f.job_id);
+
+            const likedJobIdsAsStrings = likedJobIds.map((id) => String(id));
+
+            const likedJobs = await db('job_postings_details')
+                .select('id', 'title', 'location', 'compensation', 'summary')
+                .whereIn('id', likedJobIdsAsStrings); // Use WHERE IN with string IDs
+
+            return { results: likedJobs };
+        } catch (e) {
+            console.log(e);
+        }
     });
 
     api.get('/profile', async (req, res) => {
