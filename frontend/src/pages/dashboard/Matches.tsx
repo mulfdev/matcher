@@ -375,13 +375,13 @@ export default function DashboardMatches() {
                     />
                   </button>
                 </div>
-                <Button
-                  href={job.posting_url}
-                  color="indigo"
-                  className="w-full sm:w-auto font-semibold shadow-md hover:scale-105 transition-transform duration-150"
-                >
-                  View Details
-                </Button>
+                {/* <Button */}
+                {/*   href={job.posting_url} */}
+                {/*   color="indigo" */}
+                {/*   className="w-full sm:w-auto font-semibold shadow-md hover:scale-105 transition-transform duration-150" */}
+                {/* > */}
+                {/*   View Details */}
+                {/* </Button> */}
               </CardFooter>
             </Card>
           ))}

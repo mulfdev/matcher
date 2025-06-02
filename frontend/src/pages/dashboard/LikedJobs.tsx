@@ -83,8 +83,8 @@ export default function DashboardLikedJobs() {
               style={{
                 boxShadow:
                   idx % 2 === 0
-                    ? "0 4px 32px 0 rgba(168,85,247,0.10)"
-                    : "0 4px 32px 0 rgba(99,102,241,0.10)",
+                    ? '0 4px 32px 0 rgba(168,85,247,0.10)'
+                    : '0 4px 32px 0 rgba(99,102,241,0.10)',
               }}
             >
               <CardHeader className="pb-2">
@@ -93,14 +93,33 @@ export default function DashboardLikedJobs() {
                 </CardTitle>
                 <div className="flex items-center mt-1 text-zinc-400 text-sm gap-2">
                   <span className="flex items-center gap-1">
-                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 12.414a4 4 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414-1.414z"></path><path d="M15 11a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path></svg>
-                    {job.location || <span className="italic text-zinc-500">Remote / Flexible</span>}
+                    <svg
+                      className="w-4 h-4 text-purple-400"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M17.657 16.657L13.414 12.414a4 4 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414-1.414z"></path>
+                      <path d="M15 11a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"></path>
+                    </svg>
+                    {job.location || (
+                      <span className="italic text-zinc-500">Remote / Flexible</span>
+                    )}
                   </span>
                   {job.compensation && (
                     <>
                       <span className="mx-2">•</span>
                       <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path></svg>
+                        <svg
+                          className="w-4 h-4 text-green-400"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 10c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"></path>
+                        </svg>
                         {formatCompensation(job.compensation)}
                       </span>
                     </>
@@ -113,9 +132,9 @@ export default function DashboardLikedJobs() {
                 </Text>
               </CardContent>
               <CardFooter className="border-t border-zinc-800 bg-zinc-900/60 flex justify-between items-center">
-                <Button color="indigo" className="font-semibold shadow-md hover:scale-105 transition-transform duration-150">
-                  View Details
-                </Button>
+                {/* <Button color="indigo" className="font-semibold shadow-md hover:scale-105 transition-transform duration-150"> */}
+                {/*   View Details */}
+                {/* </Button> */}
               </CardFooter>
             </Card>
           ))}
