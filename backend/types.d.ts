@@ -28,6 +28,20 @@ type InferSchemaType<T> = T extends { properties: infer P }
 export type AuthBody = InferSchemaType<typeof authSchema>;
 export type JobFeedbackBody = InferSchemaType<typeof jobFeedbackSchema>;
 
+export interface JobPostings {
+    id: string; // int8, primary key, not nullable
+    company_id: string; // int8, not nullable
+    department?: string; // text, nullable
+    sub_department?: string; // text, nullable
+    role_title?: string; // text, nullable
+    location?: string; // text, nullable
+    posting_url?: string; // text, nullable
+    type?: string; // text, nullable
+    created_at: string; // timestamptz, not nullable
+    active?: boolean; // bool, nullable
+    data?: Record<string, unknown>; // jsonb, nullable
+}
+
 export interface JobPostingsDetails {
     id: string;
     created_at: string;
@@ -76,6 +90,7 @@ export type SimilarityResult = JobPostingsDetails & { similarity: number };
 
 declare module 'knex/types/tables.js' {
     interface Tables {
+        job_postings: JobPostings;
         job_postings_details: JobPostingsDetails;
         user: User;
         user_profile: UserProfile;

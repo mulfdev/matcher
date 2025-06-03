@@ -1,14 +1,14 @@
 import { type FastifyInstance, type FastifyRequest } from 'fastify';
 import got from 'got';
 import assert from 'assert';
-// Ensure weightedVectorCombine and ensureNumericVector are exported from core.ts
 import {
     db,
-    embedder, // Not directly used in this route's new logic but often part of core
+    embedder,
     llm,
     type MessageContent,
     weightedVectorCombine,
     ensureNumericVector,
+    llmJobMatch,
 } from '../core.js';
 import { OAuth2Client } from 'google-auth-library';
 import { createId } from '@paralleldrive/cuid2';
@@ -24,19 +24,51 @@ interface GoogleCallbackQuery {
     code: string;
 }
 
-function averageEmbeddings(embeddings: number[][]): number[] | null {
-    if (!embeddings || embeddings.length === 0) {
+interface JobQueryResult {
+    id: string;
+    title: string;
+    location: string | null;
+    compensation: string | null;
+    job_summary: string | null;
+    posting_url: string | null; // Added this based on the join with job_postings
+    distance: number;
+}
+
+function averageEmbeddings(embeddings: number[][] | null | undefined): number[] | null {
+    if (embeddings == null || embeddings.length === 0) {
         return null;
     }
-    const vectorLength = embeddings[0]?.length;
-    const sum = new Array(vectorLength).fill(0);
+
+    const firstEmbedding = embeddings[0];
+
+    if (firstEmbedding === undefined) {
+        return null;
+    }
+    const vectorLength = firstEmbedding.length;
+
+    if (vectorLength === 0) {
+        return null;
+    }
+
+    const sum = new Array<number>(vectorLength).fill(0);
     let validEmbeddingsCount = 0;
 
     for (const embedding of embeddings) {
-        // Guard against embeddings of different lengths
         if (embedding.length === vectorLength) {
             for (let i = 0; i < vectorLength; i++) {
-                sum[i] += embedding[i];
+                const currentSumValue = sum[i];
+                const currentEmbeddingValue = embedding[i];
+
+                if (
+                    typeof currentSumValue === 'number' &&
+                    typeof currentEmbeddingValue === 'number'
+                ) {
+                    sum[i] = currentSumValue + currentEmbeddingValue;
+                } else {
+                    throw new Error(
+                        `Invariant violation: Expected numbers but found undefined at sum[${i}] or embedding[${i}].`
+                    );
+                }
             }
             validEmbeddingsCount++;
         } else {
@@ -47,14 +79,22 @@ function averageEmbeddings(embeddings: number[][]): number[] | null {
     }
 
     if (validEmbeddingsCount === 0) {
-        return null; // No valid embeddings to average
+        return null;
     }
 
-    const avgEmbedding = sum.map((val) => val / validEmbeddingsCount);
+    const avgEmbedding = sum.map((valueInSum) => {
+        if (typeof valueInSum !== 'number') {
+            throw new Error(
+                `Invariant violation: sum array contained a non-number before averaging.`
+            );
+        }
+        return valueInSum / validEmbeddingsCount;
+    });
 
-    // Normalize the averaged embedding
     const norm = Math.sqrt(avgEmbedding.reduce((acc, val) => acc + val * val, 0));
-    if (norm === 0) return new Array(vectorLength).fill(0); // Avoid division by zero if sum is zero vector
+    if (norm === 0) {
+        return new Array<number>(vectorLength).fill(0);
+    }
     return avgEmbedding.map((val) => val / norm);
 }
 
@@ -271,7 +311,6 @@ export function apiRoutes(api: FastifyInstance) {
         }
     );
 
-    // LLM-powered job matching endpoint with vector search pre-filtering and liked job influence
     api.get('/match-job', async (req, res) => {
         if (!req.session.userId) {
             return res.status(401).send({ error: 'Must be signed in' });
@@ -298,7 +337,10 @@ export function apiRoutes(api: FastifyInstance) {
                 .send({ error: 'User profile not found. Please complete your profile.' });
         }
 
-        if (!userProfileFromDb.summary_embedding || !userProfileFromDb.skill_embedding) {
+        if (
+            userProfileFromDb.summary_embedding == null ||
+            userProfileFromDb.skill_embedding == null
+        ) {
             return res.status(400).send({
                 error: 'User profile embeddings not found. Please re-upload your resume or wait for processing.',
             });
@@ -315,7 +357,6 @@ export function apiRoutes(api: FastifyInstance) {
             return res.status(500).send({ error: 'Corrupted user profile embeddings.' });
         }
 
-        // --- Incorporate Liked Jobs ---
         const likedJobsFeedback = await db('user_job_feedback')
             .select('job_id')
             .where('user_id', req.session.userId)
@@ -325,15 +366,13 @@ export function apiRoutes(api: FastifyInstance) {
         let finalUserSummaryEmbedding = baseUserSummaryEmbedding;
         let finalUserSkillEmbedding = baseUserSkillEmbedding;
 
-        // Weights for combining base profile with liked jobs
         const PROFILE_WEIGHT = 0.7;
         const LIKED_JOBS_WEIGHT = 0.3;
 
         if (likedJobIds.length > 0) {
-            // Fetch liked jobs' details including their embeddings
             const likedJobDetails = (await db('job_postings_details')
-                .select('id', 'summary_embedding', 'skill_embedding') // Added 'id' for potential logging
-                .whereIn('id', likedJobIds.map(String)) // Job IDs in job_postings_details are strings
+                .select('id', 'summary_embedding', 'skill_embedding')
+                .whereIn('id', likedJobIds.map(String))
                 .whereNotNull('summary_embedding')
                 .whereNotNull('skill_embedding')) as Partial<
                 Pick<JobPostingsDetails, 'id' | 'summary_embedding' | 'skill_embedding'>
@@ -376,20 +415,25 @@ export function apiRoutes(api: FastifyInstance) {
                 );
             }
         }
-        // --- END Incorporate Liked Jobs ---
 
-        // Prepare UserProfile for LLM (uses base textual data)
+        let processedExperience: Experience[];
+        const expSource = userProfileFromDb.experience;
+        if (expSource == null) {
+            processedExperience = [];
+        } else if (Array.isArray(expSource)) {
+            processedExperience = expSource;
+        } else {
+            processedExperience = Object.values(expSource as Record<string, Experience>);
+        }
+
         const userProfileForLlm: UserProfile = {
             user_id: userProfileFromDb.user_id,
             career_level: userProfileFromDb.career_level,
             total_experience_years: Number(userProfileFromDb.total_experience_years),
-            experience: (Array.isArray(userProfileFromDb.experience)
-                ? userProfileFromDb.experience
-                : Object.values(userProfileFromDb.experience || {})) as Experience[],
+            experience: processedExperience,
             skills: userProfileFromDb.skills,
             category: userProfileFromDb.category,
             summary: userProfileFromDb.summary,
-            // These embeddings are the user's original ones. The `finalUser...Embedding` are for the vector search query.
             skill_embedding: baseUserSkillEmbedding,
             summary_embedding: baseUserSummaryEmbedding,
         };
@@ -397,18 +441,17 @@ export function apiRoutes(api: FastifyInstance) {
         const finalUserSummaryEmbeddingSql = `ARRAY[${finalUserSummaryEmbedding.join(',')}]::vector`;
         const finalUserSkillEmbeddingSql = `ARRAY[${finalUserSkillEmbedding.join(',')}]::vector`;
 
-        // Fetch all feedback (liked and disliked) to exclude from recommendations
         const feedbacks = await db('user_job_feedback')
             .select('job_id')
             .where('user_id', req.session.userId);
-        const excludedJobIds = feedbacks.map((f) => String(f.job_id)); // Job IDs are BIGINT in feedback, string in postings
+        const excludedJobIds = feedbacks.map((f) => String(f.job_id));
 
         const K_NEAREST_CANDIDATES = 50;
         const LLM_INPUT_LIMIT = 30;
-        const SUMMARY_QUERY_WEIGHT = 0.6; // Weight for summary in the job vector search distance calc
-        const SKILL_QUERY_WEIGHT = 0.4; // Weight for skill in the job vector search distance calc
+        const SUMMARY_QUERY_WEIGHT = 0.6;
+        const SKILL_QUERY_WEIGHT = 0.4;
 
-        const jobsRaw = await db
+        const jobsRaw = (await db
             .select(
                 'j.id',
                 'j.title',
@@ -416,7 +459,6 @@ export function apiRoutes(api: FastifyInstance) {
                 'j.compensation',
                 'j.summary AS job_summary',
                 'job_postings.posting_url',
-                // Use the final (potentially preference-adjusted) user embeddings for distance calculation
                 db.raw(
                     `(${SUMMARY_QUERY_WEIGHT} * (j.summary_embedding <-> ${finalUserSummaryEmbeddingSql})) + (${SKILL_QUERY_WEIGHT} * (j.skill_embedding <-> ${finalUserSkillEmbeddingSql})) AS distance`
                 )
@@ -426,60 +468,65 @@ export function apiRoutes(api: FastifyInstance) {
             .whereNotIn('j.id', excludedJobIds)
             .whereNotNull('j.summary_embedding')
             .whereNotNull('j.skill_embedding')
-            .orderBy('distance', 'asc') // Lower distance means more similar
-            .limit(K_NEAREST_CANDIDATES);
+            .orderBy('distance', 'asc')
+            .limit(K_NEAREST_CANDIDATES)) as JobQueryResult[];
 
-        if (!jobsRaw || jobsRaw.length === 0) {
+        if (jobsRaw.length === 0) {
             return res.status(404).send({
                 error: 'No relevant jobs found. Try broadening your profile or liking some jobs to refine suggestions!',
             });
         }
 
-        const jobsForLlm = jobsRaw.slice(0, LLM_INPUT_LIMIT).map((j: any) => ({
-            id: String(j.id), // Ensure ID is string for LLM and subsequent mapping
+        const jobsForLlm = jobsRaw.slice(0, LLM_INPUT_LIMIT).map((j: JobQueryResult) => ({
+            id: String(j.id),
             title: j.title,
             location: j.location ?? undefined,
             compensation: j.compensation ?? undefined,
-            summary: j.job_summary ?? undefined, // Use the aliased summary
+            summary: j.job_summary ?? undefined,
         }));
 
         if (jobsForLlm.length === 0) {
-            // This case should be rare if jobsRaw has items, but good for safety
             return res
                 .status(404)
                 .send({ error: 'No suitable jobs to send for final matching after filtering.' });
         }
 
         try {
-            const { llmJobMatch } = await import('../core.js'); // Assuming dynamic import
             const rankedJobsFromLlm = await llmJobMatch({
                 userProfile: userProfileForLlm,
                 jobs: jobsForLlm,
-                maxResults: 7, // Or your desired number of final recommendations
+                maxResults: 7,
             });
 
-            const jobMap = new Map(jobsForLlm.map((j) => [j.id, j]));
+            const rawJobDataMap = new Map(jobsRaw.map((job) => [String(job.id), job]));
+
             const results = rankedJobsFromLlm
                 .map((rankedJob: { id: string; score: number; reason?: string }) => {
-                    const jobDetails = jobMap.get(rankedJob.id);
-                    if (!jobDetails) {
+                    const jobDetailsFromLlmInput = jobsForLlm.find((j) => j.id === rankedJob.id);
+
+                    if (!jobDetailsFromLlmInput) {
                         console.warn(
-                            `LLM returned job ID ${rankedJob.id} which was not in the set sent for ranking.`
+                            `LLM returned job ID ${rankedJob.id} which was not in the set sent for ranking (jobsForLlm).`
                         );
                         return null;
                     }
 
-                    // FIXME: the wrong link is being sent!
+                    const originalRawJob = rawJobDataMap.get(rankedJob.id);
+                    if (!originalRawJob) {
+                        console.warn(
+                            `Could not find original raw data for LLM ranked job ID ${rankedJob.id}.`
+                        );
+                        return null;
+                    }
 
-                    const lookup = jobsRaw.find((job) => job.id === rankedJob.id);
                     return {
-                        ...jobDetails,
+                        ...jobDetailsFromLlmInput,
                         score: rankedJob.score,
                         reason: rankedJob.reason,
-                        posting_url: lookup.posting_url,
+                        posting_url: originalRawJob.posting_url,
                     };
                 })
-                .filter((job) => job !== null); // Remove any nulls if a job ID wasn't found
+                .filter((job): job is NonNullable<typeof job> => job !== null);
 
             console.log(results);
             return { results };
@@ -524,21 +571,22 @@ export function apiRoutes(api: FastifyInstance) {
                 .where('user_id', req.session.userId)
                 .andWhere('liked', true);
 
-            if (!likedFeedback || likedFeedback.length === 0) {
-                return { results: [] }; // No liked jobs
+            if (likedFeedback.length === 0) {
+                return { results: [] };
             }
 
             const likedJobIds = likedFeedback.map((f) => f.job_id);
-
             const likedJobIdsAsStrings = likedJobIds.map((id) => String(id));
 
             const likedJobs = await db('job_postings_details')
                 .select('id', 'title', 'location', 'compensation', 'summary')
-                .whereIn('id', likedJobIdsAsStrings); // Use WHERE IN with string IDs
+                .whereIn('id', likedJobIdsAsStrings);
 
             return { results: likedJobs };
         } catch (e) {
             console.log(e);
+            // Adding a return here to avoid implicit undefined return on error
+            return res.status(500).send({ error: 'Failed to fetch liked jobs' });
         }
     });
 
@@ -555,14 +603,28 @@ export function apiRoutes(api: FastifyInstance) {
             )
             .where('user_id', req.session.userId)
             .first();
+
         if (!profile) return res.status(404).send({ error: 'Profile not found' });
+
         profile.total_experience_years = Number(profile.total_experience_years);
-        if (profile.experience && !Array.isArray(profile.experience)) {
-            profile.experience = Object.values(profile.experience as any);
-        } else if (!profile.experience) {
-            profile.experience = [];
+
+        let processedExperience: Experience[];
+        const expSource = profile.experience;
+        if (expSource != null && typeof expSource === 'object' && !Array.isArray(expSource)) {
+            processedExperience = Object.values(expSource as Record<string, Experience>);
+        } else if (expSource == null) {
+            processedExperience = [];
+        } else {
+            processedExperience = expSource; // It's already an array or we assume it is
         }
-        return { data: profile };
+
+        // Ensure the returned profile object has the experience field correctly typed as Experience[]
+        const responseProfile = {
+            ...profile,
+            experience: processedExperience,
+        };
+
+        return { data: responseProfile };
     });
 
     api.get('/auth/me', async (req, res) => {
